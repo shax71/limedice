@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//tmp/**)",
+      "Read(//c/tmp/**)",
+      "Read(//c/Users/ScottWatson/AppData/Local/Temp/**)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "jq -r '.tool_input.file_path' | xargs -I{} sh -c 'KB_URL=http://localhost:3012 node C:/Users/ScottWatson/source/repos/KnowledgeBench/dist/cli.js reindex-file \"{}\" 2>/dev/null || true'"
+          }
+        ]
+      }
+    ]
+  }
+}

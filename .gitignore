@@ -1,0 +1,12 @@
+# Local Claude Code state
+.claude/settings.local.json
+
+# Playwright MCP debug artefacts
+.playwright-mcp/
+snapshot.yml
+page-*.png
+header-logo.png
+
+# OS
+.DS_Store
+Thumbs.db

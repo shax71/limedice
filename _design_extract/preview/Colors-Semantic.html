@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>Colors — Semantic</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  .card { padding: 18px 20px; height: 150px; display: flex; flex-direction: column; gap: 10px; }
+  .row4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; flex: 1; }
+  .sw { border-radius: 10px; padding: 12px; display: flex; flex-direction: column; justify-content: space-between; color: #fff; }
+  .sw .name { font-weight: 600; font-size: 13px; }
+  .sw .hex  { font-family: var(--font-mono); font-size: 11px; opacity: 0.9; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="row4">
+    <div class="sw" style="background:#5BA048"><span class="name">Success</span><span class="hex">#5BA048</span></div>
+    <div class="sw" style="background:#D4A13A"><span class="name">Warning</span><span class="hex">#D4A13A</span></div>
+    <div class="sw" style="background:#C8553D"><span class="name">Error</span><span class="hex">#C8553D</span></div>
+    <div class="sw" style="background:#042C53"><span class="name">Info</span><span class="hex">#042C53</span></div>
+  </div>
+  <div class="meta-label">Success is a muted lime derivative — the signature lime is reserved for brand.</div>
+</div>
+</body></html>

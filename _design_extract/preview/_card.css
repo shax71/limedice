@@ -1,0 +1,31 @@
+/* Shared styles for preview cards rendered in the Design System tab.
+   Each card targets 700×~150px unless noted. Kept minimal — the
+   card itself IS the specimen; no framing chrome. */
+@import url('../colors_and_type.css');
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--color-paper);
+  color: var(--fg-1);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+.card {
+  box-sizing: border-box;
+  width: 700px;
+  padding: 20px 24px;
+  background: var(--color-paper);
+}
+
+.row  { display: flex; gap: 12px; align-items: stretch; }
+.col  { display: flex; flex-direction: column; }
+.grow { flex: 1; }
+.meta-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--fg-3);
+  letter-spacing: 0.02em;
+}

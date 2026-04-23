@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>Elevation</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  body { background: #FAF7F2; }
+  .card { background: #FAF7F2; padding: 24px; height: 170px; display: flex; align-items: center; justify-content: space-around; }
+  .e { width: 140px; height: 90px; background: #fff; border-radius: 8px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; }
+  .e .lbl { font-family: var(--font-mono); font-size: 11px; color: #042C53; }
+  .e .px  { font-family: var(--font-mono); font-size: 10px; color: #857D72; }
+  .s-sm { box-shadow: 0 1px 2px rgba(4,44,83,.06); }
+  .s-md { box-shadow: 0 4px 12px rgba(4,44,83,.08); }
+  .s-lg { box-shadow: 0 12px 32px rgba(4,44,83,.12); }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="e s-sm"><span class="lbl">--shadow-sm</span><span class="px">subtle lift</span></div>
+  <div class="e s-md"><span class="lbl">--shadow-md</span><span class="px">hover / menu</span></div>
+  <div class="e s-lg"><span class="lbl">--shadow-lg</span><span class="px">modal / overlay</span></div>
+</div>
+</body></html>

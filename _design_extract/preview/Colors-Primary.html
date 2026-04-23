@@ -1,0 +1,23 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>Colors — Primary</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  .card { padding: 18px 20px; height: 150px; display: flex; flex-direction: column; gap: 10px; }
+  .swatches { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; flex: 1; }
+  .sw { border-radius: 10px; padding: 12px 14px; display: flex; flex-direction: column; justify-content: space-between; border: 1px solid rgba(0,0,0,0.04); }
+  .sw .name { font-family: var(--font-sans); font-weight: 600; font-size: 13px; }
+  .sw .hex  { font-family: var(--font-mono); font-size: 11px; opacity: 0.8; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="swatches">
+    <div class="sw" style="background:#042C53; color:#EDE8E0;"><span class="name">Navy</span><span class="hex">#042C53</span></div>
+    <div class="sw" style="background:#74F443; color:#042C53;"><span class="name">Lime</span><span class="hex">#74F443</span></div>
+    <div class="sw" style="background:#D4765A; color:#FFFFFF;"><span class="name">Terracotta</span><span class="hex">#D4765A</span></div>
+  </div>
+  <div class="meta-label">Primary palette — navy dominates, lime signals, terracotta warms.</div>
+</div>
+</body></html>

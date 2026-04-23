@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>Colors — Pairings</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  .card { padding: 18px 20px; height: 180px; display: flex; flex-direction: column; gap: 10px; }
+  .grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; flex: 1; }
+  .p { border-radius: 10px; padding: 10px 12px; display: flex; flex-direction: column; justify-content: space-between; font-size: 11px; }
+  .p .label { font-family: var(--font-mono); font-size: 10px; opacity: 0.8; }
+  .p .headline { font-weight: 600; font-size: 13px; line-height: 1.15; }
+  .dot { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; vertical-align: 1px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="grid">
+    <div class="p" style="background:#042C53; color:#fff;">
+      <span class="label">Bold hero</span>
+      <span class="headline">Navy<br>+ lime CTA</span>
+      <span><span class="dot" style="background:#74F443"></span>lime</span>
+    </div>
+    <div class="p" style="background:#EAF6E2; color:#042C53;">
+      <span class="label">Warm hero</span>
+      <span class="headline">Mint<br>+ navy type</span>
+      <span><span class="dot" style="background:#D4765A"></span>terracotta</span>
+    </div>
+    <div class="p" style="background:#FFFFFF; color:#042C53; border: 1px solid #D8D2C8;">
+      <span class="label">Editorial</span>
+      <span class="headline">Paper<br>+ terracotta</span>
+      <span><span class="dot" style="background:#D4765A"></span>warm accent</span>
+    </div>
+    <div class="p" style="background:#FAF7F2; color:#042C53; border: 1px solid #D8D2C8;">
+      <span class="label">Case study</span>
+      <span class="headline">Warm<br>+ all three</span>
+      <span><span class="dot" style="background:#74F443"></span><span class="dot" style="background:#D4765A"></span></span>
+    </div>
+    <div class="p" style="background:#031A33; color:#EDE8E0;">
+      <span class="label">Dark (v2)</span>
+      <span class="headline">Deep navy<br>+ warm type</span>
+      <span><span class="dot" style="background:#74F443"></span><span class="dot" style="background:#D4765A"></span></span>
+    </div>
+  </div>
+  <div class="meta-label">Five safe pairings. Never place lime on terracotta at full saturation.</div>
+</div>
+</body></html>

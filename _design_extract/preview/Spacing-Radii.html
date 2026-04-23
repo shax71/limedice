@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>Radii</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  .card { padding: 20px 24px; height: 150px; display: flex; align-items: center; gap: 18px; }
+  .rad { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+  .rad .box { width: 72px; height: 72px; background: #EAF6E2; border: 1px solid #B8B0A4; }
+  .rad .lbl { font-family: var(--font-mono); font-size: 10px; color: #042C53; }
+  .rad .px  { font-family: var(--font-mono); font-size: 10px; color: #857D72; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="rad"><div class="box" style="border-radius:4px"></div><span class="lbl">--radius-sm</span><span class="px">4px · inputs</span></div>
+  <div class="rad"><div class="box" style="border-radius:8px"></div><span class="lbl">--radius-md</span><span class="px">8px · cards</span></div>
+  <div class="rad"><div class="box" style="border-radius:16px"></div><span class="lbl">--radius-lg</span><span class="px">16px · hero</span></div>
+  <div class="rad"><div class="box" style="border-radius:999px"></div><span class="lbl">--radius-pill</span><span class="px">999px · chips</span></div>
+</div>
+</body></html>

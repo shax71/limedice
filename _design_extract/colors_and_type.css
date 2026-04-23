@@ -1,0 +1,250 @@
+/* =========================================================
+   Lime Dice — Colors & Type Tokens
+   Single source of truth for colour + typography variables.
+   Import at the root of any HTML/JSX artifact.
+   ========================================================= */
+
+/* ---- Webfonts --------------------------------------------------------- */
+/* Inter (headings + body) and JetBrains Mono (technical accents).
+   Loaded from Google Fonts CDN. If you need the files locally, drop them
+   into ./fonts/ and swap the @import below for @font-face rules. */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+:root {
+  /* =======================================================
+     COLOURS
+     ======================================================= */
+
+  /* Primary palette */
+  --color-navy:        #042C53;  /* Primary. Dominant brand. */
+  --color-lime:        #74F443;  /* Signature accent. Sparingly. */
+  --color-terracotta:  #D4765A;  /* Warm secondary accent. */
+
+  /* Warm neutrals */
+  --color-ink:         #0A1628;  /* Body text on light bg */
+  --color-stone-900:   #2A241E;  /* Deepest text on warm surfaces */
+  --color-stone-700:   #524A42;  /* Secondary body text */
+  --color-stone-500:   #857D72;  /* Tertiary / captions */
+  --color-stone-300:   #B8B0A4;  /* Borders, dividers */
+  --color-stone-200:   #D8D2C8;  /* Subtle surface diff */
+  --color-stone-100:   #EDE8E0;  /* Warm muted surface */
+
+  /* Paper / backgrounds */
+  --color-paper:       #FFFFFF;
+  --color-paper-mint:  #EAF6E2;
+  --color-paper-warm:  #FAF7F2;
+
+  /* Semantic */
+  --color-success:     #5BA048;
+  --color-warning:     #D4A13A;
+  --color-error:       #C8553D;
+  --color-info:        #042C53;
+
+  /* Dark-mode alt (v2) */
+  --color-navy-deep:   #031A33;
+  --color-off-white:   #EDE8E0;
+
+  /* =======================================================
+     SEMANTIC COLOUR ROLES
+     Use these in components so palette shifts cleanly.
+     ======================================================= */
+  --fg-1:              var(--color-ink);         /* primary text */
+  --fg-2:              var(--color-stone-700);   /* secondary text */
+  --fg-3:              var(--color-stone-500);   /* tertiary / meta */
+  --fg-on-dark:        var(--color-stone-100);   /* text on navy */
+  --bg-1:              var(--color-paper);       /* primary surface */
+  --bg-2:              var(--color-paper-mint);  /* alt surface */
+  --bg-3:              var(--color-paper-warm);  /* warm alt surface */
+  --bg-inverted:       var(--color-navy);        /* dark surface */
+  --border-1:          var(--color-stone-200);   /* default border */
+  --border-2:          var(--color-stone-300);   /* stronger border */
+  --accent-primary:    var(--color-lime);
+  --accent-warm:       var(--color-terracotta);
+  --link:              var(--color-terracotta);
+  --link-hover:        var(--color-navy);
+  --focus-ring:        var(--color-terracotta);
+
+  /* =======================================================
+     TYPOGRAPHY
+     ======================================================= */
+  --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, monospace;
+  --font-display: var(--font-sans);
+
+  /* Scale (16px root) */
+  --text-xs:   0.75rem;    /* 12 */
+  --text-sm:   0.875rem;   /* 14 */
+  --text-base: 1rem;       /* 16 */
+  --text-lg:   1.125rem;   /* 18 */
+  --text-xl:   1.25rem;    /* 20 */
+  --text-2xl:  1.5rem;     /* 24 */
+  --text-3xl:  1.875rem;   /* 30 */
+  --text-4xl:  2.25rem;    /* 36 */
+  --text-5xl:  3rem;       /* 48 */
+  --text-6xl:  3.75rem;    /* 60 */
+  --text-7xl:  4.5rem;     /* 72 */
+
+  /* Line heights */
+  --lh-tight:  1.1;
+  --lh-snug:   1.2;
+  --lh-normal: 1.5;
+  --lh-body:   1.6;
+
+  /* Weights */
+  --fw-regular:  400;
+  --fw-medium:   500;
+  --fw-semi:     600;
+  --fw-bold:     700;
+
+  /* =======================================================
+     SPACING (4px base)
+     ======================================================= */
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+  --space-32: 128px;
+
+  /* =======================================================
+     RADII
+     ======================================================= */
+  --radius-sm:   4px;
+  --radius-md:   8px;
+  --radius-lg:   16px;
+  --radius-pill: 999px;
+
+  /* =======================================================
+     ELEVATION (soft, navy-tinted)
+     ======================================================= */
+  --shadow-sm: 0 1px 2px rgba(4, 44, 83, 0.06);
+  --shadow-md: 0 4px 12px rgba(4, 44, 83, 0.08);
+  --shadow-lg: 0 12px 32px rgba(4, 44, 83, 0.12);
+
+  /* =======================================================
+     LAYOUT
+     ======================================================= */
+  --maxw-content: 1200px;
+  --maxw-reading: 680px;
+  --gutter-desktop: 24px;
+  --gutter-mobile:  16px;
+
+  /* =======================================================
+     MOTION — restrained, functional
+     ======================================================= */
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast:   120ms;
+  --dur-normal: 220ms;
+  --dur-slow:   400ms;
+}
+
+/* =========================================================
+   Semantic type utilities — use these rather than raw sizes
+   so the scale stays consistent.
+   ========================================================= */
+.h1, h1 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: var(--text-5xl);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.02em;
+  color: var(--fg-1);
+}
+.hero, .h-hero {
+  font-family: var(--font-display);
+  font-weight: var(--fw-bold);
+  font-size: var(--text-6xl);
+  line-height: var(--lh-tight);
+  letter-spacing: -0.025em;
+  color: var(--fg-1);
+}
+.h2, h2 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semi);
+  font-size: var(--text-4xl);
+  line-height: var(--lh-snug);
+  letter-spacing: -0.015em;
+  color: var(--fg-1);
+}
+.h3, h3 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semi);
+  font-size: var(--text-3xl);
+  line-height: var(--lh-snug);
+  letter-spacing: -0.01em;
+  color: var(--fg-1);
+}
+.h4, h4 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semi);
+  font-size: var(--text-2xl);
+  line-height: var(--lh-snug);
+  color: var(--fg-1);
+}
+.h5 {
+  font-family: var(--font-display);
+  font-weight: var(--fw-semi);
+  font-size: var(--text-xl);
+  line-height: var(--lh-snug);
+  color: var(--fg-1);
+}
+
+.lead {
+  font-size: var(--text-lg);
+  line-height: var(--lh-body);
+  color: var(--fg-2);
+  max-width: var(--maxw-reading);
+}
+
+.body, p {
+  font-family: var(--font-sans);
+  font-weight: var(--fw-regular);
+  font-size: var(--text-base);
+  line-height: var(--lh-body);
+  color: var(--fg-1);
+  max-width: var(--maxw-reading);
+}
+
+.meta, .caption {
+  font-size: var(--text-sm);
+  color: var(--fg-3);
+  line-height: var(--lh-normal);
+}
+
+.eyebrow {
+  display: inline-block;
+  font-size: var(--text-xs);
+  font-weight: var(--fw-semi);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--color-terracotta);
+}
+
+.mono, code, kbd, samp {
+  font-family: var(--font-mono);
+  font-size: 0.95em;
+  font-feature-settings: "liga" 0;
+}
+
+a {
+  color: var(--link);
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: color var(--dur-fast) var(--ease-out), border-color var(--dur-fast) var(--ease-out);
+}
+a:hover {
+  color: var(--link-hover);
+  border-bottom-color: var(--link-hover);
+}
+
+/* Focus ring — always visible, terracotta */
+:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 2px;
+  border-radius: 2px;
+}

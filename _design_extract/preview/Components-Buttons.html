@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>Components — Buttons</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  .card { padding: 20px 24px; height: 180px; display: flex; flex-direction: column; gap: 12px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .btn { font-family: var(--font-sans); font-weight: 500; font-size: 14px; padding: 10px 18px; border-radius: 8px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 8px; transition: all 160ms cubic-bezier(.22,1,.36,1); }
+  .btn-primary   { background: #74F443; color: #042C53; }
+  .btn-primary:hover { transform: scale(1.02); box-shadow: 0 1px 2px rgba(4,44,83,.06); }
+  .btn-secondary { background: #D4765A; color: #fff; }
+  .btn-secondary:hover { background: #C8684C; }
+  .btn-outline   { background: transparent; color: #D4765A; border: 1.5px solid #D4765A; }
+  .btn-outline:hover { background: #D4765A; color: #fff; }
+  .btn-ghost     { background: transparent; color: #042C53; border: 1px solid #042C53; }
+  .btn-ghost:hover { background: #042C53; color: #fff; }
+  .btn-link      { background: transparent; color: #D4765A; padding: 0; }
+  .btn-link:hover { color: #042C53; text-decoration: underline; }
+  .foot { font-family: var(--font-mono); font-size: 10px; color: #857D72; margin-top: auto; }
+  .sz { display: flex; gap: 8px; align-items: center; }
+  .btn-sm { padding: 6px 12px; font-size: 13px; border-radius: 6px; }
+  .btn-lg { padding: 14px 22px; font-size: 15px; border-radius: 10px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="row">
+    <button class="btn btn-primary">Start a conversation →</button>
+    <button class="btn btn-secondary">Read the writing</button>
+    <button class="btn btn-outline">Outline</button>
+    <button class="btn btn-ghost">Ghost</button>
+    <button class="btn btn-link">Link button</button>
+  </div>
+  <div class="sz">
+    <button class="btn btn-primary btn-sm">Small</button>
+    <button class="btn btn-primary">Medium</button>
+    <button class="btn btn-primary btn-lg">Large</button>
+  </div>
+  <div class="foot">Primary = lime + navy. Secondary = terracotta + white. Focus ring always terracotta.</div>
+</div>
+</body></html>

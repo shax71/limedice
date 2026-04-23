@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 120" width="500" height="120" role="img" aria-label="Lime Dice">
+  <title>Lime Dice</title>
+  <defs>
+    
+  </defs>
+  <text x="14" y="92" class="lm-word">Lime Dice</text>
+  
+  <g transform="translate(340 24) rotate(15)">
+    <rect width="16" height="16" rx="1.5" fill="#74F443"></rect>
+  </g>
+</svg>

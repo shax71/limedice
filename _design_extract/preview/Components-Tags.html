@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>Components — Tags & Pills</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  .card { padding: 22px 24px; height: 150px; display: flex; flex-direction: column; gap: 14px; }
+  .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .chip { font-family: var(--font-sans); font-size: 12px; padding: 5px 12px; border-radius: 999px; display: inline-flex; align-items: center; gap: 6px; }
+  .chip.default { background: #EDE8E0; color: #042C53; }
+  .chip.active  { background: #74F443; color: #042C53; font-weight: 500; }
+  .chip.warm    { background: #F5E4DD; color: #B85A3E; }
+  .chip.outline { background: transparent; border: 1px solid #B8B0A4; color: #042C53; }
+  .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; opacity: .7; }
+  .foot { font-family: var(--font-mono); font-size: 10px; color: #857D72; margin-top: auto; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="row">
+    <span class="chip default">Architecture</span>
+    <span class="chip default">Advisory</span>
+    <span class="chip active"><span class="dot"></span>Genomics</span>
+    <span class="chip default">Interoperability</span>
+    <span class="chip outline">+ 4 more</span>
+  </div>
+  <div class="row">
+    <span class="chip warm">Writing</span>
+    <span class="chip warm">Case study</span>
+    <span class="chip warm">Note</span>
+    <span class="chip warm">Talk</span>
+  </div>
+  <div class="foot">Default · stone-100 · Active · lime · Warm editorial · terracotta tint</div>
+</div>
+</body></html>

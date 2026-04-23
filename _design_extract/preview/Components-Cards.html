@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>Components — Cards</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  body { background: #EAF6E2; }
+  .card { background: transparent; padding: 20px 20px; height: 220px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .c { border-radius: 8px; padding: 16px; display: flex; flex-direction: column; gap: 6px; }
+  .c .eyebrow { font-size: 10px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #D4765A; }
+  .c h4 { margin: 0; font-size: 15px; font-weight: 600; color: #042C53; line-height: 1.25; }
+  .c p { margin: 0; font-size: 12px; line-height: 1.5; color: #524A42; }
+
+  .default  { background: #fff; border: 1px solid #D8D2C8; }
+  .featured { background: #042C53; color: #fff; position: relative; overflow: hidden; padding-left: 20px; }
+  .featured::before { content: ""; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: #74F443; }
+  .featured h4 { color: #fff; }
+  .featured p  { color: #B8B0A4; }
+  .editorial { background: #FAF7F2; border: 1px solid #EDE8E0; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="c default">
+    <h4>Architecture for NHS data</h4>
+    <p>Design work for trusts, ICBs and national programmes.</p>
+  </div>
+  <div class="c featured">
+    <span class="eyebrow" style="color:#74F443">Featured</span>
+    <h4>Genomics interoperability</h4>
+    <p>Specialist input where clinical detail matters.</p>
+  </div>
+  <div class="c editorial">
+    <span class="eyebrow">Writing · 6 min</span>
+    <h4>Why most data-sharing projects stall</h4>
+    <p>On the three patterns that keep trusts stuck.</p>
+  </div>
+</div>
+</body></html>

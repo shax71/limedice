@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>Components — Icons</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  .card { padding: 22px 24px; height: 170px; display: flex; flex-direction: column; gap: 14px; }
+  .row { display: flex; gap: 22px; align-items: center; color: #042C53; }
+  .row [data-lucide] { width: 22px; height: 22px; }
+  .lime [data-lucide] { color: #74F443; }
+  .warm [data-lucide] { color: #D4765A; }
+  .foot { font-family: var(--font-mono); font-size: 10px; color: #857D72; margin-top: auto; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="row">
+    <i data-lucide="network"></i>
+    <i data-lucide="database"></i>
+    <i data-lucide="git-branch"></i>
+    <i data-lucide="shield-check"></i>
+    <i data-lucide="file-text"></i>
+    <i data-lucide="users"></i>
+    <i data-lucide="workflow"></i>
+    <i data-lucide="arrow-right"></i>
+  </div>
+  <div class="row lime">
+    <i data-lucide="check-circle-2"></i>
+    <i data-lucide="zap"></i>
+    <i data-lucide="target"></i>
+    <span style="font-family:var(--font-mono);font-size:11px;color:#857D72">lime = active / emphasised</span>
+  </div>
+  <div class="row warm">
+    <i data-lucide="alert-triangle"></i>
+    <i data-lucide="info"></i>
+    <i data-lucide="bookmark"></i>
+    <span style="font-family:var(--font-mono);font-size:11px;color:#857D72">terracotta = editorial / attention</span>
+  </div>
+  <div class="foot">Lucide (regular · 1.5px stroke) via CDN · inherits currentColor</div>
+</div>
+<script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+<script>lucide.createIcons();</script>
+</body></html>

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>Brand — Logo</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@800&display=swap');
+  .card { padding: 0; height: 220px; display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+  .panel { display: flex; align-items: center; justify-content: center; flex-direction: column; gap: 14px; padding: 20px; }
+  .wordmark {
+    position: relative; display: inline-block; white-space: nowrap;
+    font-family: 'Inter', system-ui, sans-serif; font-weight: 800;
+    font-size: 56px; letter-spacing: -0.035em; line-height: 1;
+  }
+  .wordmark .square {
+    position: absolute;
+    width: 18px; height: 18px;
+    background: #74F443;
+    border-radius: 2px;
+    transform: rotate(15deg);
+    top: 1px;
+    left: 70%;
+  }
+  .light-text { color: #042C53; }
+  .dark-text  { color: #EDE8E0; }
+  .cap { font-family: var(--font-mono); font-size: 10px; color: #857D72; }
+  .light-bg { background: #fff; border-right: 1px solid #EDE8E0; }
+  .dark-bg  { background: #042C53; }
+  .dark-bg .cap { color: #B8B0A4; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="panel light-bg">
+    <span class="wordmark light-text">Lime D<span class="square"></span>ice</span>
+    <span class="cap">wordmark · navy on paper</span>
+  </div>
+  <div class="panel dark-bg">
+    <span class="wordmark dark-text">Lime D<span class="square"></span>ice</span>
+    <span class="cap">wordmark · paper on navy</span>
+  </div>
+</div>
+</body></html>

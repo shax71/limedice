@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>Brand — Voice</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  .card { padding: 22px 24px; height: 220px; display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  h5 { margin: 0 0 8px; font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; }
+  h5.do { color: #5BA048; }
+  h5.dont { color: #C8553D; }
+  q { display: block; font-size: 13px; line-height: 1.55; color: #042C53; margin-bottom: 10px; quotes: "\201C" "\201D"; }
+  q::before { content: open-quote; color: #D4765A; }
+  q::after  { content: close-quote; color: #D4765A; }
+  .dont q { color: #857D72; text-decoration: line-through; text-decoration-color: #D8D2C8; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div>
+    <h5 class="do">Do</h5>
+    <q>Most trusts have the data they need. What they don't have is a way to get it where it needs to go.</q>
+    <q>I've worked inside NHS genomics programmes long enough to know which solutions sound clever in a slide deck and which actually work on a Tuesday morning.</q>
+  </div>
+  <div class="dont">
+    <h5 class="dont">Don't</h5>
+    <q>Lime Dice leverages next-generation interoperability frameworks to unlock unprecedented value across the healthcare continuum.</q>
+    <q>Our holistic approach to digital transformation empowers stakeholders.</q>
+  </div>
+</div>
+</body></html>

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><title>Components — Forms</title>
+<link rel="stylesheet" href="_card.css">
+<style>
+  .card { padding: 20px 24px; height: 220px; }
+  .f { display: flex; gap: 16px; }
+  .field { flex: 1; display: flex; flex-direction: column; gap: 6px; }
+  label { font-family: var(--font-sans); font-weight: 500; font-size: 12px; color: #042C53; }
+  input, textarea { font-family: var(--font-sans); font-size: 13px; padding: 9px 12px; border: 1px solid #B8B0A4; border-radius: 6px; background: #fff; color: #0A1628; outline: none; }
+  input:focus, textarea:focus { border-color: #D4765A; box-shadow: 0 0 0 3px rgba(212,118,90,.18); }
+  .err input { border-color: #C8553D; }
+  .err .msg { font-family: var(--font-sans); font-size: 11px; color: #C8553D; }
+  .foot { font-family: var(--font-mono); font-size: 10px; color: #857D72; margin-top: 10px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="f">
+    <div class="field">
+      <label>Name</label>
+      <input value="Scott" />
+    </div>
+    <div class="field">
+      <label>Organisation</label>
+      <input placeholder="NHS trust, ICB or supplier" />
+    </div>
+    <div class="field err">
+      <label>Work email</label>
+      <input value="scott@" />
+      <span class="msg">Enter a valid email address.</span>
+    </div>
+  </div>
+  <div class="field" style="margin-top:12px">
+    <label>What are you trying to solve?</label>
+    <textarea rows="2" placeholder="A sentence or two is plenty."></textarea>
+  </div>
+  <div class="foot">Labels always above. Focus = terracotta border + glow. Error = error red + text.</div>
+</div>
+</body></html>
