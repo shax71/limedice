@@ -10,13 +10,13 @@
 ## 1. Brand Identity
 
 **Who we are**
-Lime Dice is a specialist digital health consultancy helping NHS organisations and health tech suppliers design systems that get the right patient information to the right people, at the moment of care.
+Lime Dice is a specialist digital health consultancy. From architecture through to implementation, working with NHS organisations and health tech suppliers to make patient information available where it's needed.
 
 **What we do (one-liner)**
-Helping NHS organisations and health tech suppliers design systems that get the right patient information to the right people, at the moment of care.
+From architecture through to implementation. Working with NHS organisations and health tech suppliers to make patient information available where it's needed.
 
 **What we do (expanded)**
-Most health systems struggle to get patient information where it's needed, when it's needed. Lime Dice works with NHS organisations and suppliers to design architectures that make information available across services and regions, so clinicians and patients have what they need to make the right decisions. Experience spans frontline clinical systems through to national programmes, giving a clear view of what works in practice and what doesn't.
+Most health systems struggle to get patient information where it's needed, when it's needed. Lime Dice works with NHS organisations and suppliers across the full span of the work: system architectures, solution designs, and hands-on subject matter expertise during implementation. The result is architecture that survives delivery, not architecture that lives only on a slide. Experience spans frontline clinical systems through to national programmes, giving a clear view of what works in practice and what doesn't.
 
 **Audience**
 - Primary: NHS organisations (trusts, ICBs, GLHs, NHS England programmes)
@@ -28,11 +28,30 @@ Most health systems struggle to get patient information where it's needed, when 
 - Specialist without being niche or intimidating
 - Pragmatic, plain-spoken, quietly confident
 - Independent and unafraid to say what isn't working
+- Patient-first by methodology, not just by sentiment
+- Willing to take a position on architectural and ownership questions, even when it creates friction with stakeholders who'd prefer a more comfortable answer
 
 **Positioning against competitors**
 Unlike large consultancies (Aire Logic, DrDoctor, Janeiro Digital), Lime Dice is a specialist independent practice. The brand should feel lighter, warmer, and more distinctive than the typical enterprise health tech website. The warm terracotta accent and mint paper tones are deliberately chosen to differentiate from the cool corporate blues that dominate the sector.
 
+The credibility marker is twenty years of NHS digital experience across primary, secondary and tertiary care, from trust through to national programme. This is hard-won pattern recognition rather than theoretical knowledge, and the copy should reflect that wherever it can.
+
 Avoid the "big agency" aesthetic: stock photos of clinicians, grid-heavy case study layouts, and corporate navy-on-navy.
+
+**Working beliefs (the load-bearing intellectual positions)**
+
+These are the views that shape how the work is approached. They should be honoured in any new copy, especially anywhere that takes a position (pull quotes, About copy, services framing).
+
+- **Patient information, not data.** "Data" is plumbing-layer language. "Patient information" is the semantic, human, decision-ready layer. Use the latter unless specifically writing about technical mechanics.
+- **The fundamental problem is information deficit across care settings.** It is not that trusts have the data and just need to share it. It is that the patient's information is fragmented across multiple settings (often multiple ICBs), and the architecture has to address the deficit, not just the sharing.
+- **The patient is often the integration point already.** When systems fail to talk to each other, patients show clinicians their phone screen, repeat their history, carry letters between appointments. The job is to design for the integration that's already happening, not pretend it isn't.
+- **Data should be associated with the patient, not the organisation.** Personal data store style architectures aren't just an implementation choice. They are a stance on who should own and carry health information across organisations and borders.
+- **Patient-first methodology, applied as a test.** Every design has to pass the test "does this improve clinical outcomes". ROI is a secondary test, because financial efficiency frees up clinical capacity.
+- **Walled gardens are the wrong shape of solution.** Most "transformation" projects extend the wall rather than make it permeable. Excellent interop within an ICB is pointless if ICBs cannot work together as a mesh.
+- **Hub-and-spoke with mixed centralisation and federation.** Pure centralisation fails on legal compliance. Pure federation fails on performance. The honest answer is mixed mode, decoupled and semantically harmonised, exposed through standards developers can actually use.
+- **Standards are necessary but not sufficient.** FHIR is a standard, not a strategy. SNOMED is a vocabulary, not a plan. Naming the standard is not the same as having an architecture.
+
+These positions create friction with some stakeholders. That is expected and acceptable. Trust IT teams may resist because point-to-point integration platforms address the wrong layer. Suppliers may resist because their commercial model depends on data captivity. Information governance teams may use IG concerns as a veto when the underlying solution is unpopular for other reasons. Commissioners and clinicians tend to be supportive when the work is done well.
 
 ---
 
@@ -282,17 +301,24 @@ No finished logo yet. Suggested direction for Claude Design to explore:
 - **Specific over abstract.** Name the system, the standard, the trust. Avoid "leveraging synergies" and similar.
 - **Honest about difficulty.** Health data is hard. Don't promise frictionless transformation.
 - **Technical where it helps.** FHIR, SNOMED CT, GLH, PDS, NRL are named without apology; brief explanations offered inline where useful.
-- **Warm, not corporate.** First person ("I work with...") is acceptable and preferred over "Lime Dice leverages..." on personal / about pages.
+- **Warm, not corporate.** First person ("I work with...") is acceptable on personal pages like About. Avoid first person in service descriptions, hero copy, and anything that should age well as the practice grows. Use pronoun-free constructions ("Working with...", "Designing the...") instead of false plural ("we").
+- **Specific over universal in proof.** "Frontline clinical systems through to national programmes" earns its place because it names the two ends of the journey. Generic boasts like "extensive experience" do not.
 
 ### Voice examples
 
 **Do:**
-- "Most trusts have the data they need. What they don't have is a way to get it where it needs to go."
+- "Patient information, where it's needed."
+- "From architecture through to implementation. Working with NHS organisations and health tech suppliers to make patient information available where it's needed."
+- "Frontline clinical systems through to national programmes."
+- "The architecture has to survive contact with reality. I stay involved through delivery to make sure it does."
+- "The digital plumbing that makes the rest possible."
+- "Most NHS data sits in walled gardens. The patient is the one who keeps having to climb over the wall, doing the integration the systems aren't doing. The architecture should change, not the patient."
 - "I've worked inside NHS genomics programmes long enough to know which solutions sound clever in a slide deck and which actually work on a Tuesday morning."
 
 **Don't:**
 - "Lime Dice leverages next-generation interoperability frameworks to unlock unprecedented value across the healthcare continuum."
 - "Our holistic approach to digital transformation empowers stakeholders."
+- "Most trusts have the data they need." This phrasing is misleading. The fundamental problem is information deficit across care settings, not that organisations are sitting on data they could share if they just chose to. Avoid framings that imply data sufficiency.
 
 ### Tagline
 
@@ -301,6 +327,17 @@ No finished logo yet. Suggested direction for Claude Design to explore:
 This is the agreed tagline. Use as-is, with the comma and the full stop, in all hero treatments and brand applications. The comma is load-bearing: it creates a deliberate pause that lets "patient information" land before the qualifier. Don't drop it, don't restructure the line, and don't substitute synonyms ("data" instead of "information" undermines the meaning entirely).
 
 Earlier candidates ("Digital Health Specialists", "Health systems, joined up properly", "Data that actually reaches the patient") are retired and should not be reintroduced.
+
+### Domain precision traps
+
+These are vocabulary choices where casual or imprecise wording will be noticed by the technical NHS audience and will undermine credibility. Treat them as load-bearing words, not interchangeable synonyms.
+
+- **"Data" vs "information".** Data is the plumbing layer (bytes, records, FHIR resources moving between systems). Information is the semantic layer (meaningful, contextualised, interpretable by a clinician or patient). Lime Dice's positioning lives at the information layer. Default to "patient information" unless writing specifically about technical mechanics.
+- **"Health systems" plural vs the components inside one.** "Health systems talk to each other" is wrong. Health systems are separate national systems (NHS England vs NHS Scotland, NHS vs private). What we mean is the components inside a health system (trusts, GP systems, labs, community services, national spine services, supplier products). Use precise nouns: "components within the NHS", "the NHS as a system", "trusts and GP systems", etc.
+- **"Sharing" vs "available".** Sharing implies an active organisation pushing data somewhere. Available implies the information is there for whoever needs it, when they need it. The latter fits the patient-first frame better.
+- **"Pillars" for service offerings.** Avoid. Pillars are vertical and equal, which breaks any layout where one service is foundational rather than parallel. Use "areas of work" instead.
+- **"Patient-first" as a slogan vs as a methodology.** Patient-first should always be testable in copy. Avoid "we put patients first" style assertions. Prefer specific consequences: "every design has to pass the test of improving clinical outcomes", "the patient is the destination", "data should be associated with the patient, not the organisation".
+- **"End-to-end" and "full lifecycle".** Both are corporate clichés. Use "from architecture through to implementation" or "frontline clinical systems through to national programmes" instead.
 
 ---
 
@@ -336,31 +373,50 @@ All generated designs must meet WCAG 2.2 AA as a minimum. Lime Dice serves the N
 
 ## 9. Example Pages and References
 
-### Website structure (MVP)
+### Website structure (current)
 
-1. **Home** — hero with strapline, one-line value proposition, three service pillars, social proof strip, CTA to contact.
-2. **About** — the Scott story. Why independent. Background across clinical systems and national programmes. Credibility markers.
-3. **Services / How I work** — three pillars:
-   - Architecture and design for NHS organisations
-   - Advisory for health tech suppliers selling into the NHS
-   - Specialist input on genomics, interoperability, and data sharing
-4. **Writing / Insights** — blog or long-form thinking, optional for MVP but architected for later. Editorial cards use warm paper backgrounds and terracotta accents.
-5. **Contact** — simple form, email, LinkedIn, Companies House registration note in footer.
+1. **Home** — hero with tagline, supporting copy, primary and secondary CTA, single-line proof statement.
+2. **Services** — section eyebrow "Services", H2 "Four areas of work.", four areas presented as three top-row cards plus a full-width connecting band beneath:
+   - Architecture, design and implementation (top row)
+   - Advisory for health tech suppliers (top row)
+   - Specialist depth in genomics (top row)
+   - Integration, interoperability and automation (full-width band, the "digital plumbing" connecting layer)
+3. **Working belief** — single featured panel between Services and About, used for a manifesto-style position statement framed honestly as Lime Dice's own perspective (not a client quote). Eyebrow signals the source of authority ("Two decades in").
+4. **About** — the Scott story. Why independent. Background across clinical systems and national programmes. Credibility markers.
+5. **Contact** — form-only. Short intro copy (describe the problem), the form itself, and a response-time expectation below the lead. Footer and contact section intentionally contain no email or LinkedIn links — the form is the only intake channel.
+
+### Form-only contact: why and how to honour it
+
+Contact is deliberately form-only. No `mailto:` links, no LinkedIn URL, no direct email address anywhere on the site (including the footer). The form is the single intake channel for new enquiries. This is a deliberate anti-spam choice and a light qualification step: visitors who won't fill a short form are probably not serious enquiries.
+
+If future sessions are asked to "add an email link" or "add a LinkedIn link to the footer for discoverability", the answer is no unless the brief has explicitly reversed this decision. Scott can be found elsewhere online without those links being prominent on the Lime Dice site.
+
+If LinkedIn presence matters enough to re-introduce, put the link in the footer only (not Contact) and be aware it reopens the spam-harvest surface.
+
+### Sections deferred
+
+- **Writing / Insights**. Removed for now because real published pieces are not yet ready. Bringing back placeholder cards labelled "Coming soon" is a credibility tax. Section to be reintroduced when at least one substantive piece exists. When reintroduced, editorial cards use warm paper backgrounds and terracotta accents.
+- **Products**. Lime Dice is also building health software products. To be added as a separate section (not folded into Services) when at least one named product is ready to discuss specifically. Services and products are different commercial models and should not share a section.
 
 ### Hero reference
 
 Lean closer to Linear, Stripe, or Vercel in restraint than to the dense agency layouts at airelogic.com or janeirodigital.com. One clear headline, one clear CTA, generous whitespace.
 
-Two possible hero treatments:
-- **Treatment A (bold):** Navy background, white heading, lime CTA, small terracotta eyebrow label.
+The current hero uses Treatment A (bold navy). Treatment B (warm mint) remains valid for an About page or alternative section.
+
+- **Treatment A (bold):** Navy background, white heading, lime CTA, lime eyebrow label.
 - **Treatment B (warm):** Mint background, navy heading, lime CTA, terracotta accent in supporting illustration.
+
+### Pull quote / working belief panel
+
+The featured panel between Services and About is for stating a position, not for displaying client testimonials. Until permission-attributed client quotes exist, this section uses Lime Dice's own working beliefs framed honestly. Eyebrow makes the framing clear (e.g. "Two decades in", "A working belief", "How I think about it"). Drop quotation marks on statements that are not actually quotes.
 
 ### Pages to generate during onboarding
 
 Claude Design, when processing this file, should generate as a validation test:
-- A home page hero (try both bold and warm treatments)
-- A services overview section with three cards
-- An insights/writing preview card with the editorial styling
+- A home page hero (Treatment A by default)
+- A services section with three top-row cards plus a full-width connecting band beneath
+- A working belief / featured panel using current copy
 - A simple contact form
 - A basic footer with Companies House number placeholder
 
@@ -376,6 +432,10 @@ Claude Design, when processing this file, should generate as a validation test:
 
 ## Appendix: Quick reference for Claude Design
 
+- Tagline: "Patient information, where it's needed." (use as-is, comma is load-bearing)
+- Core position: data should be associated with the patient, not the organisation
+- Methodology: patient-first, tested by clinical outcome
+- Credibility marker: twenty years of NHS digital experience, frontline through to national
 - Primary brand colour: navy `#042C53`
 - Signature accent: lime `#74F443`
 - Warm accent: terracotta `#D4765A`
@@ -389,4 +449,5 @@ Claude Design, when processing this file, should generate as a validation test:
 - Target: NHS and UK health tech audience
 - Feel: modern, technical, warm, human
 - Differentiator: the warm terracotta and mint tones set Lime Dice apart from the cool corporate blues that dominate UK health tech
-- Avoid: stock medical imagery, corporate clichés, rainbow palettes, heavy shadows, all-caps headings
+- Key vocabulary: "patient information" not "data"; "areas of work" not "pillars"; pronoun-free constructions over false plural "we"
+- Avoid: stock medical imagery, corporate clichés, rainbow palettes, heavy shadows, all-caps headings, "Most trusts have the data they need" framings
