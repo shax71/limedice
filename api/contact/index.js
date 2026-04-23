@@ -54,9 +54,12 @@ module.exports = async function (context, req) {
     const contentType = (req.headers['content-type'] || '').toLowerCase();
     if (!contentType.includes('application/json')) return reject(context, 'content-type');
 
-    const origin = req.headers['origin'] || '';
-    const allowed = process.env.ALLOWED_ORIGIN || '';
-    if (allowed && origin && origin !== allowed) return reject(context, `origin ${origin}`);
+    const originHost = (() => {
+      const o = req.headers['origin'] || '';
+      try { return new URL(o).host; } catch (_) { return o.replace(/^https?:\/\//, ''); }
+    })();
+    const allowedHost = (process.env.ALLOWED_ORIGIN || '').replace(/^https?:\/\//, '').replace(/\/$/, '');
+    if (allowedHost && originHost && originHost !== allowedHost) return reject(context, `origin ${originHost}`);
 
     const body = req.body || {};
     const { name, email, organisation, brief, turnstileToken, startedAt, website } = body;
