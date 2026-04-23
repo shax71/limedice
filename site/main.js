@@ -85,23 +85,19 @@
 
     async function getTurnstileToken() {
       if (!window.turnstile || !turnstileWidget) return null;
-      // Invisible mode: execute() returns a Promise in newer builds, but for compatibility
-      // we resolve via the token from getResponse() after execute().
+      // Managed mode: widget self-renders and solves. Read the token; if empty,
+      // wait up to 5s for the widget to finish its silent challenge.
+      const immediate = window.turnstile.getResponse(turnstileWidget);
+      if (immediate) return immediate;
       return new Promise((resolve) => {
-        try {
-          window.turnstile.execute(turnstileWidget, {
-            action: 'contact',
-            callback: (token) => resolve(token),
-            'error-callback': () => resolve(null),
-          });
-          // Fallback timeout
-          setTimeout(() => {
-            const t = window.turnstile.getResponse(turnstileWidget);
-            resolve(t || null);
-          }, 5000);
-        } catch (_) {
-          resolve(null);
-        }
+        const start = Date.now();
+        const tick = () => {
+          const t = window.turnstile.getResponse(turnstileWidget);
+          if (t) return resolve(t);
+          if (Date.now() - start > 5000) return resolve(null);
+          setTimeout(tick, 200);
+        };
+        tick();
       });
     }
 

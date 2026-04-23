@@ -172,8 +172,8 @@
         <!-- Honeypot: real users don't fill this. Visually hidden via .hp in styles.css. -->
         <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
         <input type="hidden" name="startedAt" id="startedAt">
-        <!-- Cloudflare Turnstile — replace data-sitekey before deploy. -->
-        <div class="cf-turnstile" data-sitekey="0x4AAAAAADB_9NJ09WDw013T" data-size="invisible" data-callback="onTurnstileToken"></div>
+        <!-- Cloudflare Turnstile — widget renders itself (Managed mode). -->
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAADB_9NJ09WDw013T" data-appearance="interaction-only" data-action="contact"></div>
         <button type="submit" class="btn btn-primary">Send <i data-lucide="arrow-right"></i></button>
         <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
       </form>
