@@ -16,3 +16,6 @@ api/obj/
 # OS
 .DS_Store
 Thumbs.db
+
+# Dev-time reference, not shipped
+Lime Dice Design System.zip
