@@ -134,6 +134,16 @@ input:focus, textarea:focus {
 .field .err { font-size: 12px; color: var(--color-error); }
 .field.invalid input, .field.invalid textarea { border-color: var(--color-error); }
 
+/* Honeypot: visually hidden but still in DOM / accessibility tree for bots that skip display:none. */
+.hp {
+  position: absolute !important;
+  left: -9999px !important;
+  width: 1px !important;
+  height: 1px !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
 /* Lucide sizing */
 [data-lucide] { width: 20px; height: 20px; stroke-width: 1.75; }
 
@@ -355,16 +365,19 @@ input:focus, textarea:focus {
 .contact-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 56px; align-items: flex-start; }
 .contact-copy h2 { margin-top: 12px; }
 .contact-copy .lead { margin-top: 20px; }
-.contact-meta { margin: 32px 0 0; display: flex; flex-direction: column; gap: 10px; }
-.contact-meta li { display: flex; align-items: center; gap: 12px; font-size: 15px; color: var(--color-navy); }
-.contact-meta li [data-lucide] { color: var(--color-terracotta); }
+.contact-next {
+  margin-top: 20px;
+  font-size: 14px;
+  color: var(--color-stone-700);
+  line-height: 1.55;
+}
 .contact-form { display: flex; flex-direction: column; padding: 32px; }
 .form-status { font-size: 13px; color: var(--color-success); margin-top: 8px; }
 .form-status.error { color: var(--color-error); }
 
 /* ---- Footer ---------------------------------------------------------- */
 .site-footer { background: var(--color-navy); color: var(--color-stone-300); padding: 80px 0 32px; margin-top: 0; }
-.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1fr 1.5fr; gap: 32px; align-items: flex-start; }
+.footer-grid { display: grid; grid-template-columns: 2fr 1fr 1.5fr; gap: 32px; align-items: flex-start; }
 .footer-tag { margin-top: 16px; color: var(--color-stone-300); font-size: 14px; }
 .site-footer h5 { font-size: 12px; text-transform: uppercase; letter-spacing: 0.12em; color: var(--color-lime); margin: 0 0 12px; font-weight: 600; }
 .site-footer ul { display: flex; flex-direction: column; gap: 8px; }

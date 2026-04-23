@@ -1,0 +1,14 @@
+{
+  "name": "limedice-api",
+  "version": "1.0.0",
+  "description": "Lime Dice contact form handler (Azure Static Web Apps managed Functions).",
+  "private": true,
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@azure/identity": "^4.5.0",
+    "@microsoft/microsoft-graph-client": "^3.0.7",
+    "isomorphic-fetch": "^3.0.0"
+  }
+}

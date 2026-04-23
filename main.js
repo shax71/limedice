@@ -48,9 +48,12 @@
     sections.forEach((s) => io.observe(s));
   }
 
-  // Contact form — validate + mailto fallback
+  // Contact form — validate + POST to /api/contact
   const form = document.getElementById('contactForm');
   const status = document.getElementById('formStatus');
+  const startedAtInput = document.getElementById('startedAt');
+  if (startedAtInput) startedAtInput.value = String(Date.now());
+
   if (form && status) {
     const fields = {
       name: { el: form.name, errEl: document.getElementById('err-name') },
@@ -72,45 +75,102 @@
       }
     };
 
-    form.addEventListener('submit', (e) => {
+    const setStatus = (msg, isError) => {
+      status.classList.toggle('error', !!isError);
+      status.textContent = msg;
+    };
+
+    const submitButton = form.querySelector('button[type="submit"]');
+    const turnstileWidget = form.querySelector('.cf-turnstile');
+
+    async function getTurnstileToken() {
+      if (!window.turnstile || !turnstileWidget) return null;
+      // Invisible mode: execute() returns a Promise in newer builds, but for compatibility
+      // we resolve via the token from getResponse() after execute().
+      return new Promise((resolve) => {
+        try {
+          window.turnstile.execute(turnstileWidget, {
+            action: 'contact',
+            callback: (token) => resolve(token),
+            'error-callback': () => resolve(null),
+          });
+          // Fallback timeout
+          setTimeout(() => {
+            const t = window.turnstile.getResponse(turnstileWidget);
+            resolve(t || null);
+          }, 5000);
+        } catch (_) {
+          resolve(null);
+        }
+      });
+    }
+
+    form.addEventListener('submit', async (e) => {
       e.preventDefault();
-      status.classList.remove('error');
-      status.textContent = '';
+      setStatus('');
 
       const name = String(form.name.value || '').trim();
       const email = String(form.email.value || '').trim();
       const organisation = String(form.organisation.value || '').trim();
       const brief = String(form.brief.value || '').trim();
 
-      let ok = true;
+      let valid = true;
       setError('name', name ? '' : 'Required.');
-      if (!name) ok = false;
+      if (!name) valid = false;
       if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         setError('email', 'Enter a valid email address.');
-        ok = false;
+        valid = false;
       } else {
         setError('email', '');
       }
       setError('brief', brief ? '' : 'A sentence is plenty.');
-      if (!brief) ok = false;
+      if (!brief) valid = false;
 
-      if (!ok) {
-        status.classList.add('error');
-        status.textContent = 'Please fix the highlighted fields.';
+      if (!valid) {
+        setStatus('Please fix the highlighted fields.', true);
         return;
       }
 
-      const subject = `Website enquiry from ${name}`;
-      const bodyLines = [
-        `Name: ${name}`,
-        `Email: ${email}`,
-        organisation ? `Organisation: ${organisation}` : null,
-        '',
+      submitButton.disabled = true;
+      setStatus('Sending…');
+
+      const turnstileToken = await getTurnstileToken();
+      if (!turnstileToken) {
+        submitButton.disabled = false;
+        setStatus('Couldn’t verify. Please try again.', true);
+        return;
+      }
+
+      const payload = {
+        name,
+        email,
+        organisation,
         brief,
-      ].filter((l) => l !== null);
-      const href = `mailto:scott@limedice.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(bodyLines.join('\n'))}`;
-      window.location.href = href;
-      status.textContent = 'Opening your email client…';
+        turnstileToken,
+        startedAt: Number(startedAtInput.value) || 0,
+        website: String((form.website && form.website.value) || ''),
+      };
+
+      try {
+        const r = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload),
+        });
+        const data = await r.json().catch(() => ({}));
+        if (data && data.ok) {
+          form.reset();
+          if (startedAtInput) startedAtInput.value = String(Date.now());
+          if (window.turnstile && turnstileWidget) window.turnstile.reset(turnstileWidget);
+          setStatus('Thanks — message sent. A reply usually comes within two working days.');
+        } else {
+          setStatus('Couldn’t send. Please try again shortly.', true);
+        }
+      } catch (_) {
+        setStatus('Couldn’t send. Please check your connection and try again.', true);
+      } finally {
+        submitButton.disabled = false;
+      }
     });
   }
 })();

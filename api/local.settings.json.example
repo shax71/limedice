@@ -1,0 +1,17 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+
+    "TENANT_ID": "your-entra-tenant-id",
+    "CLIENT_ID": "your-app-registration-client-id",
+    "CLIENT_SECRET": "your-app-registration-client-secret",
+
+    "MAILBOX_UPN": "scott@limedice.com",
+    "DESTINATION_EMAIL": "scott@limedice.com",
+
+    "TURNSTILE_SECRET": "your-turnstile-secret",
+    "ALLOWED_ORIGIN": "http://localhost:4280"
+  }
+}

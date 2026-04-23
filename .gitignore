@@ -7,6 +7,12 @@ snapshot.yml
 page-*.png
 header-logo.png
 
+# Azure Functions
+api/local.settings.json
+api/node_modules/
+api/bin/
+api/obj/
+
 # OS
 .DS_Store
 Thumbs.db

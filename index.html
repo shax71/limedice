@@ -8,6 +8,7 @@
 <link rel="icon" href="assets/logo-mark.svg">
 <link rel="stylesheet" href="colors_and_type.css">
 <link rel="stylesheet" href="styles.css">
+<script src="https://challenges.cloudflare.com/turnstile/v0/api.js" async defer></script>
 </head>
 <body>
 
@@ -72,12 +73,12 @@
         <article class="card pillar">
           <i data-lucide="compass" class="pillar-icon"></i>
           <h3>Advisory for health tech suppliers</h3>
-          <p>For suppliers selling into the NHS. Product-market fit from the buyer's side of the table, interoperability strategy, and the clinical safety and information governance positioning that procurement teams actually look for.</p>
+          <p>For suppliers selling into the NHS, covering product-market fit from the buyer's side of the table, interoperability strategy, and the clinical safety and information governance positioning that procurement teams actually look for.</p>
         </article>
         <article class="card pillar">
           <i data-lucide="dna" class="pillar-icon"></i>
           <h3>Specialist depth in genomics</h3>
-          <p>Years inside the NHS Genomics Medicine Service. The data sharing problems are specific (consent, results return, lab-to-clinic flow), the standards are still settling, and the clinical stakes are high. Useful when generic interoperability advice isn't enough.</p>
+          <p>Embedded inside the NHS Genomic Medicine Service. The hard problems are specific: consent beyond a tick-box, structured result return into EPRs, and the order-to-report pathway across the regional services. The standards are still maturing. Generic interoperability advice won't cut it.</p>
         </article>
       </div>
       <article class="card services-band">
@@ -145,11 +146,8 @@
       <div class="contact-copy">
         <span class="eyebrow">Contact</span>
         <h2 id="contact-h">Start a conversation.</h2>
-        <p class="lead">Tell me what you&rsquo;re trying to solve. If it fits, I&rsquo;ll suggest a shape of engagement and what it would cost. If it doesn&rsquo;t, I&rsquo;ll say so and try to point you somewhere useful.</p>
-        <ul class="contact-meta">
-          <li><i data-lucide="mail"></i><a href="mailto:scott@limedice.com">scott@limedice.com</a></li>
-          <li><i data-lucide="linkedin"></i><a href="https://www.linkedin.com/" rel="noopener">LinkedIn</a></li>
-        </ul>
+        <p class="lead">Describe what you&rsquo;re trying to solve. If it fits, you&rsquo;ll get back the shape of an engagement and what it would cost. If it doesn&rsquo;t, you&rsquo;ll get an honest answer back, usually with a pointer somewhere more useful.</p>
+        <p class="contact-next">A reply usually comes back within two working days. If the brief is clear, a first call follows shortly after.</p>
       </div>
       <form class="card contact-form" id="contactForm" novalidate>
         <div class="field">
@@ -171,7 +169,12 @@
           <textarea id="brief" name="brief" rows="4" placeholder="A sentence or two is plenty." required></textarea>
           <span class="err" id="err-brief" hidden></span>
         </div>
-        <button type="submit" class="btn btn-primary">Send message <i data-lucide="arrow-right"></i></button>
+        <!-- Honeypot: real users don't fill this. Visually hidden via .hp in styles.css. -->
+        <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
+        <input type="hidden" name="startedAt" id="startedAt">
+        <!-- Cloudflare Turnstile — replace data-sitekey before deploy. -->
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAADB_9NJ09WDw013T" data-size="invisible" data-callback="onTurnstileToken"></div>
+        <button type="submit" class="btn btn-primary">Send <i data-lucide="arrow-right"></i></button>
         <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
       </form>
     </div>
@@ -185,7 +188,7 @@
       <div class="brand brand-dark">
         <img class="brand-logo" src="Lime-Dice-Logo-2026-Bold-Dark-v1.svg" alt="Lime Dice">
       </div>
-      <p class="footer-tag">Digital Health Specialists.</p>
+      <p class="footer-tag">Patient information, where it's needed.</p>
     </div>
     <div>
       <h5>Site</h5>
@@ -196,16 +199,9 @@
       </ul>
     </div>
     <div>
-      <h5>Elsewhere</h5>
-      <ul>
-        <li><a href="https://www.linkedin.com/" rel="noopener">LinkedIn</a></li>
-        <li><a href="mailto:scott@limedice.com">scott@limedice.com</a></li>
-      </ul>
-    </div>
-    <div>
       <h5>Registered</h5>
       <p class="footer-meta">
-        Lime Dice Ltd · Companies House <span class="mono">00000000</span><br>
+        Lime Dice Ltd · Companies House <span class="mono">12100818</span><br>
         Registered in England &amp; Wales.
       </p>
     </div>
