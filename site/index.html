@@ -173,7 +173,7 @@
         <input class="hp" type="text" name="website" tabindex="-1" autocomplete="off" aria-hidden="true">
         <input type="hidden" name="startedAt" id="startedAt">
         <!-- Cloudflare Turnstile — widget renders itself (Managed mode). -->
-        <div class="cf-turnstile" data-sitekey="0x4AAAAAADB_9NJ09WDw013T" data-appearance="interaction-only" data-action="contact"></div>
+        <div class="cf-turnstile" data-sitekey="0x4AAAAAADB_9NJ09WDw013T" data-appearance="interaction-only" data-action="contact" data-error-callback="onTurnstileError"></div>
         <button type="submit" class="btn btn-primary">Send <i data-lucide="arrow-right"></i></button>
         <p class="form-status" id="formStatus" role="status" aria-live="polite"></p>
       </form>

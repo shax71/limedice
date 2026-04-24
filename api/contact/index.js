@@ -25,7 +25,7 @@ function getGraphClient() {
   return graphClient;
 }
 
-async function verifyTurnstile(token, remoteip) {
+async function verifyTurnstile(context, token, remoteip) {
   const params = new URLSearchParams();
   params.append('secret', process.env.TURNSTILE_SECRET);
   params.append('response', token);
@@ -34,7 +34,15 @@ async function verifyTurnstile(token, remoteip) {
     method: 'POST',
     body: params,
   });
-  const data = await r.json();
+  const data = await r.json().catch(() => ({}));
+  context.log.info('turnstile siteverify', {
+    status: r.status,
+    success: data.success,
+    errorCodes: data['error-codes'],
+    hostname: data.hostname,
+    action: data.action,
+    challengeTs: data.challenge_ts,
+  });
   return data && data.success === true;
 }
 
@@ -82,7 +90,7 @@ module.exports = async function (context, req) {
       req.headers['x-azure-clientip'] ||
       undefined;
 
-    const captchaOk = await verifyTurnstile(turnstileToken, remoteip);
+    const captchaOk = await verifyTurnstile(context, turnstileToken, remoteip);
     if (!captchaOk) return reject(context, 'turnstile');
 
     const submittedEmail = email.trim();

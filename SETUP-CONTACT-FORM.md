@@ -225,10 +225,13 @@ Site serves at `http://localhost:4280` with `/api/contact` wired up to the local
 |---------|--------------|-----|
 | `403 Forbidden` from Graph | Admin consent not granted, or Application Access Policy blocks the mailbox | Re-check step 2a (green ticks), re-run `Test-ApplicationAccessPolicy` from step 3 |
 | `401 Unauthorized` from Graph | `CLIENT_SECRET` wrong, expired, or has leading/trailing whitespace | Regenerate in step 2b, update app setting in step 9 |
-| Form shows "Couldn't verify" | Turnstile site key wrong, or the site's hostname isn't in the Turnstile hostname list | Check step 8 and the hostnames in step 4 |
+| Form shows "Couldn't verify" | Turnstile hasn't finished its silent challenge before the 5-second client poll times out, or site key wrong | Wait a few seconds on the page before clicking Send; otherwise check step 8 and the hostnames in step 4 |
+| Form returns `{ok:false}` from `/api/contact` (HTTP 200 with generic error) | One of the server-side checks rejected: origin mismatch, Turnstile siteverify failed, honeypot, time-trap, or Graph exception | Read App Insights `traces \| where message startswith "contact"` for the specific `contact rejected: <reason>` line; the handler logs the full siteverify response so Turnstile `error-codes` are visible |
+| Turnstile fails with `110200` on the Azure default hostname (`*.N.azurestaticapps.net`) even when the hostname is in the allowlist | Observed during Lime Dice go-live — Turnstile's hostname validation appears unreliable against the Azure default hostname format. Cause not established; re-typing the hostname, waiting several hours, and using a fresh browser context did not clear it | Don't test on the Azure default hostname. Add the custom domain (`www.limedice.com`) first, point `ALLOWED_ORIGIN` at it, and test there |
 | Form returns success but no email arrives | App Access Policy scope mismatch; mailbox UPN typo | Step 3 + `MAILBOX_UPN` in step 9 |
 | Custom domain stuck on validation | TXT record not yet propagated | Give it 15 min; `nslookup -type=TXT limedice.com` to check |
 | SWA build fails on `api/` | Function runtime mismatch | Confirm Node 20 in `api/package.json` engines; SWA picks that up automatically |
+| `ALLOWED_ORIGIN` must match the hostname the browser is actually using | Easy to forget after DNS changes. A mismatch causes `/api/contact` to reject with `contact rejected: origin <host>` before Turnstile is even checked | Update the SWA Configuration app setting whenever the test hostname changes; Function restarts in ~30s. Value can omit the scheme (handler normalises both forms) |
 
 ---
 

@@ -1,3 +1,7 @@
+window.onTurnstileError = function (code) {
+  console.error('[turnstile] error code:', code);
+};
+
 (function () {
   'use strict';
 
