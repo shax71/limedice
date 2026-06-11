@@ -45,7 +45,7 @@ Goal: distil a reusable **prevention rule**, not a diary entry. Ask Scott three 
 3. **Why it was missed** — pick the category that fits best:
    - `types` — type-system blind spot (`any`, `as`, missing discriminated union, weakened generic)
    - `tests` — test gap (untested branch, missing edge case, mocked the wrong layer)
-   - `convention-drift` — an existing convention or insight already covered this and wasn't followed
+   - `convention-drift` — an existing convention or insight already covered this and wasn’t followed
    - `environment` — worked locally, broke under different conditions (LAN, Windows, sandbox, prod, container)
    - `spec-ambiguity` — the requirement was imprecise
 

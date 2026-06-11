@@ -1,9 +1,14 @@
 ---
 name: end-session
 description: Limedice session cleanup — quality checks, ticket updates, knowledge capture
+kb-modules:
+  end-session/record-session: "2026-06-11T16:56:39.287Z"
+  end-session/session-report: "2026-06-11T16:56:39.371Z"
 ---
 
 # Session Stop
+
+**Output discipline:** every step before the final Session Report prints one line — outcome only, plus anything that failed. Required prompts (file-growth ticket decisions and the success/push questions) are exempt: ask only the question, wait, then print the step's outcome line. All other detail defers to the Session Report, the single block Scott reads.
 
 Work through each section. Do not skip steps.
 
@@ -98,28 +103,93 @@ Only publish rows Scott approves.
 
 ## 8. Record Session
 
-```bash
-curl -s -X POST http://localhost:3012/api/v1/sessions \
-  -H "Content-Type: application/json" \
-  -d '{
-    "project": "limedice",
-    "summary": "<1-2 sentence summary>",
-    "decisions": "<key decisions>",
-    "outcome": "<result>",
-    "follow_ups": "<follow-up items>",
-    "files_modified": ["<from git diff --name-only>"],
-    "tags": ["limedice"],
-    "source_agent": "claude-code"
-  }'
+
+<!-- kb:end-session/record-session:begin -->
+Ask Scott **one combined prompt** — this is the single interactive stop for session wrap-up (file-growth decisions, if this skill has that check, were already taken there):
+
+**Was this session successful** (`success` / `partial` / `failure`; enter = `unknown`) **— and push to GitHub afterwards?** (yes/no)
+
+If the reply does not clearly contain both answers, ask one clarifying question. Carry the push answer forward to the Export/Push step — do not re-ask there. The success answer determines both the recorded `session_result` and the Session Report `Result` line — they must agree.
+
+Record session summary via API:
 ```
+POST /api/v1/sessions
+{
+  "project": "<project>",
+  "summary": "<1-2 sentence summary>",
+  "decisions": "<key decisions made>",
+  "outcome": "<result>",
+  "follow_ups": "<any follow-up items>",
+  "files_modified": ["<from git diff --name-only <start_sha>..HEAD, using the session anchor's start_sha (cwd-validated); fall back to working-tree changes if no anchor>"],
+  "tags": ["<project>"],
+  "source_agent": "claude-code",
+  "session_result": "<success|partial|failure|unknown>"
+}
+```
+
+If KB is unreachable, skip — this is non-blocking.
+
+After recording, trigger co-occurrence updates using the `session_id` from the session anchor if present (`~/.knowledgebench/session-current-<project>.json`), otherwise the session ID noted at `/start-session`. Use that id — not the id returned by the session-recording POST, which identifies the history entry, not this live session. If neither is available, skip co-occurrence and report it as `—` in the Session Report:
+```
+POST /api/v1/maintenance/cooccurrence
+{"session_id": "<session-id>"}
+```
+
+Finally, mark the anchor closed so the next `/start-session` knows this session ended cleanly (best-effort):
+```bash
+python - <<'PY' 2>/dev/null
+import json, datetime, pathlib
+p = pathlib.Path.home() / ".knowledgebench" / f"session-current-{pathlib.Path.cwd().resolve().name.lower()}.json"
+d = json.loads(p.read_text())
+d["ended_at"] = datetime.datetime.now().astimezone().isoformat()
+p.write_text(json.dumps(d, indent=2))
+PY
+```
+<!-- kb:end-session/record-session:end -->
 
 ## 9. Export DB and Push
 
-1. `KB_URL=http://localhost:3012 kb export C:/Users/ScottWatson/source/repos/KnowledgeBench/kb-data.json`
+1. `KB_URL=http://localhost:3012 kb export /Users/dev/source/repos/KnowledgeBench/kb-data.json`
 2. Commit the export in the KnowledgeBench repo if changed.
 
-Ask Scott: **"Push to GitHub? (yes/no)"**
+Use the push answer from the combined success + push prompt (do not re-ask). Commit the export regardless of the push answer — never leave it staged or uncommitted. Push only on yes.
 
-## 10. Session Summary
+## 10. Session Report
 
-Produce a brief summary for Scott.
+<!-- kb:end-session/session-report:begin -->
+Produce one fixed-shape **Session Report** block. Same lines, same order, every session — each fact is findable in the same place without scrolling back through the earlier steps. Use `—` for a line with nothing to report; never omit a line.
+
+**Terse-steps rule (applies to the whole skill):** while working the steps before this one, print one line per step — outcome only, plus anything that failed. Required prompts (file-growth ticket decisions and the success/push questions) are exempt and do not count against the one-line rule: ask only the question, wait for the answer, then print the step's one outcome line. All other detail defers to this report — it is the only thing Scott should need to read.
+
+**Facts only:** populate the report exclusively from what the earlier steps actually observed. If a field was not run or a count is unavailable, write `—`; never infer success. The answer to "Was this session successful?" determines the `Result` status and the recorded session result — they must agree. The outcome text after the status comes only from observed work; if nothing concise was observed, end the line after the status.
+
+```
+═══ Session Report — <project> — <YYYY-MM-DD> ═══
+
+Result      <✔ success | ◐ partial | ✘ failure | ? unknown> — <one-line outcome vs the session goal>
+QA          build <✓|✗|—> · lint <✓|✗ (N errors)|—> · tests <passed>/<total> | —
+Growth      <file (N lines) → ticket #id; file (N lines) → declined | —>
+Git         <N> commit(s) <short-shas> · tree <clean | dirty: N files> · push <✓ | declined | —>
+Tickets     <#id old_status→new_status | #id commented | #id created — one entry per ticket touched | —>
+Insights    <+N captured #ids · promoted → <domain> #id | —>
+Models      <SM#id updated | drift ticket #id raised | —>
+Session     recorded #<id> (<result>) · co-occurrence <✓ | —>
+Docs        PROGRESS.md <✓|—> · memory <N added/updated | —>
+
+Follow-ups
+  - <every unresolved item carried forward, one line each, ticket # where one exists — or "none">
+
+Efficiency
+  - <top 1–2 findings from the session-reflection step, one line each — `—` if this skill has no reflection step>
+
+Next session
+  - <the single most likely starting point>
+```
+
+Rules:
+
+- Every labelled line appears every time — `—` beats absence; the fixed shape is the point. A line whose step doesn't exist in this skill (no file-growth check, no drift check) is simply `—`.
+- One entry per ticket touched; status transition where one happened, otherwise `commented`/`created`.
+- *Follow-ups* is the safety net: anything deferred with "later" during the session lands here or it is lost.
+- Hard cap ~30 lines. If a line would push past the cap, compress it to counts (e.g. `5 tickets advanced (#1611 #1266 #1256 #1542 #1535)`) and put the detail in a ticket comment or KB entry, referenced by id.
+<!-- kb:end-session/session-report:end -->
