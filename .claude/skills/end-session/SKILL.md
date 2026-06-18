@@ -4,7 +4,7 @@ description: Limedice session cleanup — quality checks, ticket updates, knowle
 kb-modules:
   end-session/notify-chatterbox: "2026-06-18T16:40:17.414Z"
   end-session/record-session: "2026-06-11T16:56:39.287Z"
-  end-session/session-report: "2026-06-11T16:56:39.371Z"
+  end-session/session-report: "2026-06-12T13:18:46.112Z"
 ---
 
 # Session Stop
@@ -176,28 +176,42 @@ Produce one fixed-shape **Session Report** block. Same lines, same order, every 
 
 **Facts only:** populate the report exclusively from what the earlier steps actually observed. If a field was not run or a count is unavailable, write `—`; never infer success. The answer to "Was this session successful?" determines the `Result` status and the recorded session result — they must agree. The outcome text after the status comes only from observed work; if nothing concise was observed, end the line after the status.
 
+Emit the report as a ` ```diff `-fenced code block — the language tag is what colours it in the terminal. Line-prefix semantics (first character of every report line):
+
+- `+` — healthy/positive line (renders green): successful result, green QA, clean git, recorded session
+- `-` — empty (`—`), declined, or failed line (renders red)
+- `!` — needs-attention line (renders orange): partial/unknown result, mixed outcomes, the whole *Follow-ups* section
+- two leading spaces — neutral line (plain): *Efficiency* and *Next session* sections
+- `! ═══ … ═══` — the first and last lines are horizontal rules prefixed with `!` (render orange, matching the Follow-ups section); the title lives inside the opening one
+
+A line that mixes states takes the worst element's prefix (`+` only when everything on the line is healthy, `-` only when entirely empty/negative, otherwise `!`).
+
+```diff
+! ═══ Session Report — <project> — <YYYY-MM-DD> ═══
+
++ Result      <✔ success | ◐ partial | ✘ failure | ? unknown> — <one-line outcome vs the session goal>
++ QA          build <✓|✗|—> · lint <✓|✗ (N errors)|—> · tests <passed>/<total> | —
+- Growth      <file (N lines) → ticket #id; file (N lines) → declined | —>
++ Git         <N> commit(s) <short-shas> · tree <clean | dirty: N files> · push <✓ | declined | —>
++ Tickets     <#id old_status→new_status | #id commented | #id created — one entry per ticket touched | —>
++ Insights    <+N captured #ids · promoted → <domain> #id | —>
++ Models      <SM#id updated | drift ticket #id raised | —>
++ Session     recorded #<id> (<result>) · co-occurrence <✓ | —>
++ Docs        PROGRESS.md <✓|—> · memory <N added/updated | —>
+
+! Follow-ups
+!   - <every unresolved item carried forward, one line each, ticket # where one exists — or "none">
+
+  Efficiency
+    - <top 1–2 findings from the session-reflection step, one line each — `—` if this skill has no reflection step>
+
+  Next session
+    - <the single most likely starting point>
+
+! ═══════════════════════════════════════════════════════
 ```
-═══ Session Report — <project> — <YYYY-MM-DD> ═══
 
-Result      <✔ success | ◐ partial | ✘ failure | ? unknown> — <one-line outcome vs the session goal>
-QA          build <✓|✗|—> · lint <✓|✗ (N errors)|—> · tests <passed>/<total> | —
-Growth      <file (N lines) → ticket #id; file (N lines) → declined | —>
-Git         <N> commit(s) <short-shas> · tree <clean | dirty: N files> · push <✓ | declined | —>
-Tickets     <#id old_status→new_status | #id commented | #id created — one entry per ticket touched | —>
-Insights    <+N captured #ids · promoted → <domain> #id | —>
-Models      <SM#id updated | drift ticket #id raised | —>
-Session     recorded #<id> (<result>) · co-occurrence <✓ | —>
-Docs        PROGRESS.md <✓|—> · memory <N added/updated | —>
-
-Follow-ups
-  - <every unresolved item carried forward, one line each, ticket # where one exists — or "none">
-
-Efficiency
-  - <top 1–2 findings from the session-reflection step, one line each — `—` if this skill has no reflection step>
-
-Next session
-  - <the single most likely starting point>
-```
+(The `+`/`-` prefixes shown on the labelled lines above are illustrative — assign each line's prefix from its actual content per the semantics list.)
 
 Rules:
 
