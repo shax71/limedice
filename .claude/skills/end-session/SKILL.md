@@ -2,6 +2,7 @@
 name: end-session
 description: Limedice session cleanup — quality checks, ticket updates, knowledge capture
 kb-modules:
+  end-session/notify-chatterbox: "2026-06-18T16:40:17.414Z"
   end-session/record-session: "2026-06-11T16:56:39.287Z"
   end-session/session-report: "2026-06-11T16:56:39.371Z"
 ---
@@ -16,6 +17,18 @@ Work through each section. Do not skip steps.
 
 All ticket operations: `KB_URL=http://localhost:3012 kb ticket <command> [args]`
 Always use `--actor claude` when Claude Code creates or modifies tickets.
+
+## 0. Notify Chatterbox
+
+<!-- kb:end-session/notify-chatterbox:begin -->
+As the **first action** of this skill, announce that session-end was triggered. Best-effort and non-blocking — chatterbox is a separate LAN service; ignore any failure and never let it hold up the rest of the skill.
+
+```bash
+chatterbox post "Session End Triggered" --project "$(basename "$(git rev-parse --show-toplevel 2>/dev/null || echo "$PWD")" | tr '[:upper:]' '[:lower:]')" --author claude 2>/dev/null || true
+```
+
+Print one line: `chatterbox: notified` on success, or `chatterbox: skipped (unreachable)` if the command failed. (Server defaults to `http://localhost:8765`; override with `CHATTERBOX_SERVER_URL`.)
+<!-- kb:end-session/notify-chatterbox:end -->
 
 ## 1. Code Quality
 
