@@ -3,7 +3,7 @@ name: ui-consistency
 description: Pre-commit audit for UI consistency — design tokens, component primitives, dark-theme integrity, accessibility patterns pulled from KB insights. Runs on UI-touching diffs. Use `--plan` mode during planning to inject project UI conventions into context. Triggers when changes touch *.tsx, *.jsx, *.html, *.css, *.scss, or design-token files.
 kb-modules:
   ui-consistency/scope-detection: "2026-05-18T06:26:06.439Z"
-  ui-consistency/audit-checks: "2026-05-18T06:26:06.448Z"
+  ui-consistency/audit-checks: "2026-06-26T10:31:47.491Z"
   ui-consistency/a11y-from-kb: "2026-05-18T06:26:06.456Z"
   ui-consistency/dom-pedant-handoff: "2026-05-18T06:26:06.462Z"
   ui-consistency/plan-mode: "2026-05-18T06:26:06.469Z"
@@ -57,45 +57,44 @@ Capture the project tag (lowercased cwd basename) for the KB rule query in `a11y
 ## 2. Audit Checks
 
 <!-- kb:ui-consistency/audit-checks:begin -->
-Run these checks against each in-scope file. Each violation gets: file path, line number, rule name, what was found, suggested fix.
+Two layers: the mechanical regex checks now run as `kb ui-audit` (tested command, KB #1544); the checks that need cross-element or project-config reasoning stay here for the model.
 
-### 1. Raw design values (tokens)
+### Mechanical layer — run `kb ui-audit`
 
-- `color\s*:\s*#[0-9a-fA-F]{3,8}` outside token-source files → `var(--color-...)`
-- `(background|background-color|border-color|fill|stroke)\s*:\s*#[0-9a-fA-F]{3,8}` outside token-source files → `var(--color-...)`
-- `(margin|padding|gap|inset|top|right|bottom|left)\s*:\s*-?\d+(\.\d+)?(px|rem|em)` outside spacing-token files → `var(--space-...)`
-- `(width|height|min-width|min-height|max-width|max-height)\s*:\s*\d+(\.\d+)?(px|rem|em)` for layout (excluding icons/borders) → `var(--size-...)` or container queries
-- `font-size\s*:\s*\d+(\.\d+)?(px|rem|em)` → `var(--font-size-...)`
-- `border-radius\s*:\s*\d+(\.\d+)?(px|rem|em)` → `var(--radius-...)`
+Pass the in-scope file list (from `scope-detection`) to the command:
 
-### 2. Inline styles in markup
+```
+kb ui-audit <files...>     # explicit in-scope files
+kb ui-audit --all          # every UI file under src/ app/ web/
+kb ui-audit                # staged UI files (pre-commit default)
+kb ui-audit --json         # machine-readable findings
+```
 
-- `style="..."` or `style={{...}}` in JSX/HTML for properties covered by tokens → move to a class or use CSS vars
-- Allowed inline: dynamic positioning (`left`, `top` driven by JS state), `transform` for animation, `--<var-name>` declarations
+It emits `file:line:rule:severity`, auto-suppressing the raw-value rules in token-source files (`tokens.css`, `theme.ts`, …), and exits 1 when any `error` is present:
 
-### 3. Hand-rolled primitives
+- `raw-color`, `raw-spacing`, `raw-size`, `raw-font-size`, `raw-radius` — raw design values that should be `var(--...)` tokens (`error`)
+- `hardcoded-light` — hardcoded white (`rgb(255,…)`) that breaks dark theme (`error`)
+- `inline-style` — `style="…"` / `style={{…}}` in markup (`warn`; review the flagged lines — dynamic positioning, `transform`, and `--var` declarations are allowed exceptions the command cannot tell apart)
+- `prefers-color-scheme` — PCS query flagged for review (`warn`)
+- `class-chaos` — >10 utility classes on one element (`warn`)
 
-When the project specifies a UI library in its `:append` block, flag:
-- Raw `<button>` elements where the library has a button primitive
-- Raw `<dialog>` / `<div role="dialog">` where a Dialog primitive exists
-- Raw `<input>` / `<select>` / `<textarea>` where the library wraps them
-- Custom toggle/checkbox/radio components when the library ships them
+Treat its output as the mechanical findings — `error` blocks, `warn`/`info` report.
 
-Project-specific exceptions live in the `:append` block.
+### Model-side checks — `kb ui-audit` cannot do these
 
-### 4. Dark-theme integrity
+1. **Hand-rolled primitives** (needs the project's UI library from the `:append` block). When a library is specified, flag as `error`:
+   - Raw `<button>` where the library has a button primitive
+   - Raw `<dialog>` / `<div role="dialog">` where a Dialog primitive exists
+   - Raw `<input>` / `<select>` / `<textarea>` where the library wraps them
+   - Custom toggle/checkbox/radio when the library ships them
 
-- Hardcoded light colours that resolve to `#fff` / `rgb(255,…)` / `rgba(255,…)` in a non-token-source file → token
-- `background-color` set without a matching `color` (text contrast risk in dark mode)
-- `@media (prefers-color-scheme: ...)` without a corresponding token strategy is a smell — most projects in this codebase use class-on-root theming (`html[data-theme="dark"]`); flag PCS queries for review.
+   Project-specific exceptions live in the `:append` block.
+2. **Missing text contrast** — `background-color` set without a matching `color` on the same element (dark-mode contrast risk). Needs per-element reasoning.
+3. **Mixed token sources** — some `var(--color-...)`, some raw hex on one component → normalise.
 
-### 5. Class chaos
+### Severity
 
-- Long Tailwind-style class strings (>10 utility classes on a single element) → extract to a component or a class
-- Mixed token sources (some `var(--color-...)`, some raw hex on the same component) → normalise
-
-For each rule, record severity:
-- `error` — a token violation in non-token source, a raw primitive that has a library replacement, a known-bad a11y pattern (from `a11y-from-kb`)
+- `error` — a token violation in a non-token source, a raw primitive that has a library replacement, a known-bad a11y pattern (from `a11y-from-kb`)
 - `warn` — class chaos, suspicious PCS query
 - `info` — opportunity to use a newer token
 
