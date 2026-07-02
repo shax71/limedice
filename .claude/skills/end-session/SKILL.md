@@ -4,7 +4,7 @@ description: Limedice session cleanup — quality checks, ticket updates, knowle
 kb-modules:
   end-session/notify-chatterbox: "2026-06-18T16:40:17.414Z"
   end-session/record-session: "2026-06-11T16:56:39.287Z"
-  end-session/session-report: "2026-06-12T13:18:46.112Z"
+  end-session/session-report: "2026-06-24T21:17:04.852Z"
 ---
 
 # Session Stop
@@ -206,7 +206,7 @@ A line that mixes states takes the worst element's prefix (`+` only when everyth
     - <top 1–2 findings from the session-reflection step, one line each — `—` if this skill has no reflection step>
 
   Next session
-    - <the single most likely starting point>
+    - <the head of `kb ticket next` — name #id and title; it floats any `kb ticket sequence` override to the top>
 
 ! ═══════════════════════════════════════════════════════
 ```
@@ -218,5 +218,14 @@ Rules:
 - Every labelled line appears every time — `—` beats absence; the fixed shape is the point. A line whose step doesn't exist in this skill (no file-growth check, no drift check) is simply `—`.
 - One entry per ticket touched; status transition where one happened, otherwise `commented`/`created`.
 - *Follow-ups* is the safety net: anything deferred with "later" during the session lands here or it is lost.
+- *Next session* is sourced from `kb ticket next` (nearest-milestone, highest-priority workable ticket; it floats any active `kb ticket sequence` override to the head). If a deliberate next-session order was agreed this session, persist it first with `kb ticket sequence set <ids> --note "<why>"` so the pin survives the context reset — then the line names the override head.
 - Hard cap ~30 lines. If a line would push past the cap, compress it to counts (e.g. `5 tickets advanced (#1611 #1266 #1256 #1542 #1535)`) and put the detail in a ticket comment or KB entry, referenced by id.
+
+## After the report — prompt to clear context
+
+The Session Report is the final output of `/end-session`. Once it has printed and the session has actually closed, emit one closing line prompting the user to reset context before the next session:
+
+> ✅ Session closed. Run `/clear` now to start the next session with a clean context.
+
+`/clear` is a user-typed CLI command — Claude cannot run it itself, so this is a reminder for the user to type, not an action to perform. Print it exactly once, immediately after the report block, then stop. Skip it only if `/end-session` did not run to completion (e.g. the user aborted partway).
 <!-- kb:end-session/session-report:end -->

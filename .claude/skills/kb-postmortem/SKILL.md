@@ -2,10 +2,10 @@
 name: kb-postmortem
 description: Capture a KB insight after fixing a bug — extract the root cause, dedupe against existing insights, and write a reusable prevention rule. Run after closing a bug ticket, merging a fix, or when Scott says a bug is fixed.
 kb-modules:
-  kb-postmortem/identify-fix: "2026-05-18T06:16:10.170Z"
+  kb-postmortem/identify-fix: "2026-07-02T12:15:28.602Z"
   kb-postmortem/extract-pattern: "2026-05-18T06:16:10.180Z"
-  kb-postmortem/dedupe-check: "2026-05-18T06:16:10.201Z"
-  kb-postmortem/write-insight: "2026-05-18T06:16:10.209Z"
+  kb-postmortem/dedupe-check: "2026-06-18T21:23:27.512Z"
+  kb-postmortem/write-insight: "2026-06-18T21:23:27.519Z"
 ---
 
 # KB Postmortem
@@ -23,7 +23,7 @@ All writes go to `http://localhost:3012/api/v1/...`. Ticket ops use `KB_URL=http
 <!-- kb:kb-postmortem/identify-fix:begin -->
 Pick the fix to analyse. Default precedence:
 
-1. **Active ticket** — if the session was working a KB ticket and it was just closed or moved to `done`/`testing`, use that ticket. Pull linked commit(s) via `git log --grep "#<ticket-id>"`.
+1. **Active ticket** — if the session was working a KB ticket and it was just closed or moved to `testing`, use that ticket. Pull linked commit(s) via `git log --grep "#<ticket-id>"`.
 2. **Latest commit** on the current branch: `git log -1 --stat`.
 3. **Current uncommitted diff** if no recent commit: `git diff HEAD` — but ask Scott to commit first. Postmortems on uncommitted code drift before the insight is written.
 
@@ -73,13 +73,13 @@ Avoid stamping a near-duplicate on top of an existing insight.
    ```
 
 3. Read any candidate whose title looks adjacent. If one covers the same case:
-   - **Update** it — bump `confidence` to the next tier (`low` → `medium` → `high`), bump `frequency` (`once` → `sometimes` → `often`), and append a `## Recurrence — <date>` block to `content` citing the new commit/ticket.
-   - PATCH `/api/v1/insights/<id>` with the updated fields.
+   - **Update** it — bump `confidence` to the next tier (`low` → `medium` → `high`), bump `frequency` (`once` → `occasional` → `recurring`), and append a `## Recurrence — <date>` block to `content` citing the new commit/ticket.
+   - PUT `/api/v1/insights/<id>` with the updated fields.
    - **Do not** write a new insight. Tell Scott which one was reinforced.
 
 4. If nothing matches, proceed to `write-insight`.
 
-**Promotion hint:** when an insight reaches `confidence: high` AND `frequency: often`, flag it to Scott as a candidate for promotion to a Convention (`promoted_to: convention`, `promoted_id: <new convention id>`).
+**Promotion hint:** when an insight reaches `confidence: high` AND `frequency: recurring`, flag it to Scott as a candidate for promotion to a Convention (`promoted_to: convention`, `promoted_id: <new convention id>`).
 <!-- kb:kb-postmortem/dedupe-check:end -->
 
 ## 4. Write the Insight
@@ -101,7 +101,7 @@ POST to `http://localhost:3012/api/v1/insights`:
 Rules:
 - `name` IS the prevention rule in imperative form, not a description of the bug. Future Claude sessions search by `name` — make it match what someone *about to make the mistake* would type.
 - Include the project tag in `tags` AND set the separate `project` field — they are queried independently.
-- `confidence: "low"` + `frequency: "once"` are correct defaults for a first sighting; `dedupe-check` already handles recurrences via PATCH.
+- `confidence: "low"` + `frequency: "once"` are correct defaults for a first sighting; `dedupe-check` already handles recurrences via PUT.
 - If there is no commit yet, ask Scott to commit first. Insights without a commit reference rot fast.
 
 After POSTing, report:

@@ -99,6 +99,7 @@ Treat its output as the mechanical findings — `error` blocks, `warn`/`info` re
 - `info` — opportunity to use a newer token
 
 `error` blocks; `warn`/`info` is reported but does not block.
+
 <!-- kb:ui-consistency/audit-checks:end -->
 
 <!-- kb:ui-consistency/audit-checks:append -->
