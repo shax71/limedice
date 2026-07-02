@@ -4,9 +4,12 @@ Static one-page marketing website for **Lime Dice Ltd**, a digital health consul
 
 ## Shell Behaviour Rules
 
-- ALWAYS begin every bash command with: `cd C:/Users/ScottWatson/source/repos/limedice && <command>`
-- NEVER use `$PROJECT_ROOT` or any shell variable
-- NEVER use relative paths outside the project root
+Resolve the project root dynamically — see KB convention #34 (`kb get conventions 34`):
+
+- ALWAYS prefix bash commands with `cd "$(git rev-parse --show-toplevel)" && <command>`
+- NEVER rely on `$CLAUDE_PROJECT_DIR` — it is not exported into the Bash tool shell and expands to empty
+- NEVER use hardcoded absolute paths — they break across machines and OSes
+- NEVER use bare relative paths outside the project root — cwd is not guaranteed
 
 ## Stack
 
