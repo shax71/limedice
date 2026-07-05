@@ -4,6 +4,7 @@ description: Pre-commit review for limedice — tokens, debug leaks, accessibili
 kb-modules:
   code-review/get-diff: "2026-05-30T18:17:14.698Z"
   code-review/debug-leaks: "2026-07-02T12:15:28.181Z"
+  code-review/architecture-layering: "2026-07-05T08:42:30.625Z"
   code-review/maintainability: "2026-05-30T18:17:14.703Z"
   code-review/testing: "2026-07-02T12:15:28.263Z"
   code-review/report: "2026-05-30T18:17:14.707Z"
@@ -69,6 +70,14 @@ limedice specifics:
 - [ ] Behaviour lives in `main.js` — not inlined `onclick` attributes.
 - [ ] `_design_extract/` unmodified.
 - [ ] No build tooling introduced without discussion (the site is plain HTML/CSS/JS by design).
+
+<!-- kb:code-review/architecture-layering:begin -->
+- [ ] Changed code sits in the correct layer — entry/presentation code holds no core logic, and core logic has no knowledge of the UI, transport, or delivery layer above it
+- [ ] Where the project has module/crate boundaries, dependencies point inward toward the core — no lower layer reaching up into a higher one
+- [ ] No duplicated logic where a canonical helper already exists, and no feature logic leaking into a shared path used by unrelated callers
+- [ ] New responsibility lands in a cohesive module rather than being bolted onto an existing unrelated one
+- [ ] Where a separable core exists, it stays reachable and unit-testable without standing up the outer shell (server, UI, or entry point)
+<!-- kb:code-review/architecture-layering:end -->
 
 ### Maintainability
 
