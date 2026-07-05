@@ -1,6 +1,8 @@
 ---
 name: check
 description: Mid-session sanity gate for the limedice static site
+kb-modules:
+  check/summary-format: "2026-05-30T18:18:23.783Z"
 ---
 
 # Quick Check — static site
@@ -44,11 +46,22 @@ Any matches in production code → report for removal.
 
 ## 5. Summary
 
+<!-- kb:check/summary-format:begin -->
 Report concisely:
+- **Build:** OK / FAILED (N errors)
+- **Lint:** OK / FAILED (N warnings)
+- **Tests:** N passed, N failed
+
+If anything failed, show only the error/failure output (not the noise). Suggest next steps if the cause is clear.
+<!-- kb:check/summary-format:end -->
+
+<!-- kb:check/summary-format:append -->
+For this static site (no build/lint/test toolchain), report the project-specific fields:
 - **Server:** up (http://localhost:8080/) / down
 - **HTML lint:** OK / N warnings (if run)
 - **CSS lint:** OK / N warnings (if run)
 - **Raw hex outside tokens:** N occurrences
-- **console.*: N occurrences
+- **console.*:** N occurrences
 
 If anything failed, show only the offending line(s) and suggest a fix.
+<!-- kb:check/summary-format:append:end -->
