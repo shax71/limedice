@@ -2,6 +2,7 @@
 
 Static one-page marketing website for **Lime Dice Ltd**, a digital health consultancy. No build step, plain HTML/CSS/JS, hosted on GitHub Pages at `limedice.com`.
 
+<!-- kb:claude-md/shell-behaviour:begin -->
 ## Shell Behaviour Rules
 
 Resolve the project root dynamically — see KB convention #34 (`kb get conventions 34`):
@@ -9,7 +10,9 @@ Resolve the project root dynamically — see KB convention #34 (`kb get conventi
 - ALWAYS prefix bash commands with `cd "$(git rev-parse --show-toplevel)" && <command>`
 - NEVER rely on `$CLAUDE_PROJECT_DIR` — it is not exported into the Bash tool shell and expands to empty
 - NEVER use hardcoded absolute paths — they break across machines and OSes
-- NEVER use bare relative paths outside the project root — cwd is not guaranteed
+- NEVER use bare relative paths like `cd src` — cwd is not guaranteed
+- This applies to ALL tool calls, hooks, skills and bash blocks
+<!-- kb:claude-md/shell-behaviour:end -->
 
 ## Stack
 
@@ -47,43 +50,61 @@ DESIGN.md             Original design brief (kept for reference)
 - **WCAG 2.2 AA** minimum. Never lime text on white or mint. Focus rings: 2px terracotta, 2px offset.
 - **Licensing**: freeware closed-source. All dependencies must permit this.
 
+<!-- kb:claude-md/ticketing:begin -->
 ## Ticketing
 
-Built-in ticketing system. Server runs on port 3012 (dev). Web UI at http://localhost:3012. Project auto-detects from cwd (lowercased). Override with `--project <name>`.
+KnowledgeBench's built-in ticketing. Dev server on port 3012; web UI at http://localhost:3012. Project auto-detects from cwd (lowercased) — override with `--project <name>`.
 
 | Action | Command |
 |--------|---------|
-| List open tickets | `KB_URL=http://localhost:3012 kb ticket list --open` |
-| Show ticket | `KB_URL=http://localhost:3012 kb ticket show <id>` |
-| Create ticket | `KB_URL=http://localhost:3012 kb ticket new --type <type> --title "text" --actor claude` |
-| Update status | `KB_URL=http://localhost:3012 kb ticket update <id> --status <status> --actor claude` |
-| Add comment | `KB_URL=http://localhost:3012 kb ticket comment <id> "text" --actor claude` |
-| Close ticket | `KB_URL=http://localhost:3012 kb ticket close <id> --actor claude` |
-| Compact list | `KB_URL=http://localhost:3012 kb ticket list --open --format compact` |
+| List open tickets | `kb ticket list --open` |
+| Compact list (for context) | `kb ticket list --open --format compact` |
+| Search tickets | `kb ticket search "term"` |
+| Show ticket | `kb ticket <id>` |
+| Create ticket | `kb ticket new --type <type> --title "text" --actor claude` |
+| Update status | `kb ticket update <id> --status <status> --actor claude` |
+| Add comment | `kb ticket comment <id> "text" --actor claude` |
+| Close ticket | `kb ticket close <id> --actor claude` |
+| Generate test plan | Run `/test-plan <id>` skill |
+| List milestones | `kb milestone list` |
 
-For ticketing workflow rules (statuses, plan rule, test plan rule, --actor convention), query `kb query conventions --tags ticketing`.
+For ticketing workflow rules (statuses, plan rule, test plan rule, `--actor` convention): `kb query conventions --tags ticketing`.
+<!-- kb:claude-md/ticketing:end -->
 
+<!-- kb:claude-md/knowledge-base:begin -->
 ## Knowledge Base
 
-All cross-project knowledge is stored in KB. Query before working in any area:
+All cross-project knowledge is stored in KB. If unfamiliar with KB, read: `kb get conventions 29`.
 
-- `KB_URL=http://localhost:3012 kb query conventions --tags <topic>` — rules and standards
-- `KB_URL=http://localhost:3012 kb query system-models --tags <topic>` — how tools behave
-- `KB_URL=http://localhost:3012 kb query insights --tags <topic>` — patterns from experience
-- `KB_URL=http://localhost:3012 kb search "<term>"` — cross-domain search
-- `KB_URL=http://localhost:3012 kb query symbols --project limedice --q "<name>"` — look up indexed symbols before grepping
+Set `export KB_URL=http://localhost:3012` once at session start (the `/start-session` skill does this), then use bare `kb` commands. Query before working in any area:
 
+- `kb query conventions --tags <topic>` — rules and standards
+- `kb query system-models --tags <topic>` — how tools and systems behave
+- `kb query insights --tags <topic>` — patterns from experience
+- `kb query concepts` — project glossary (project auto-detects from cwd)
+- `kb search "<term>"` — cross-domain search
+- `kb query symbols --q "<name>"` — indexed code symbols; check before grepping
+<!-- kb:claude-md/knowledge-base:end -->
+
+<!-- kb:claude-md/github:begin -->
 ## GitHub
 
-- **Repo:** TBD — public repo under `shax71` for GitHub Pages hosting at `limedice.com`
 - Push cadence: `/end-session` asks whether to push
-- Never force-push to main/master
+- Never force-push to `main`/`master`
+- Commit only when asked; stage files by name; keep commits scoped and conventional
+<!-- kb:claude-md/github:end -->
 
+- **Repo:** TBD — public repo under `shax71` for GitHub Pages hosting at `limedice.com`
+
+<!-- kb:claude-md/structured-logging:begin -->
 ## Structured Logging
 
-Not applicable — static site, no runtime logger. Do not introduce `console.log` in production code. If debug output is ever needed, gate behind a query-string flag (e.g. `?debug=1`) and strip before merging.
+- KnowledgeBench is the log store — query shipped events with `kb logs`
+- Per-project logging rules live in KB: `kb query conventions --tags logging`
+- No raw `console.*` / `println!` in committed code — route through the project's logger per the KB conventions
+<!-- kb:claude-md/structured-logging:end -->
 
-For KB logging conventions (if needed later for build tooling): `kb query conventions --tags logging`.
+Not applicable — static site, no runtime logger. Do not introduce `console.log` in production code. If debug output is ever needed, gate behind a query-string flag (e.g. `?debug=1`) and strip before merging.
 
 ## Commands
 
@@ -95,7 +116,9 @@ For KB logging conventions (if needed later for build tooling): `kb query conven
 
 No automated test suite — content and visual correctness is verified in the browser.
 
+<!-- kb:claude-md/session-workflow:begin -->
 ## Session Workflow
 
-- **Start**: run `/start-session` on the first user message of every new conversation
-- **End**: use `/end-session` for session cleanup before ending a conversation
+- **Start**: AUTOMATICALLY run `/start-session` on the first user message of every new conversation — do not wait to be asked
+- **End**: run `/end-session` for session cleanup before finishing
+<!-- kb:claude-md/session-workflow:end -->
