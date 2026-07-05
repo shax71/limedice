@@ -4,7 +4,7 @@ description: Limedice session initialization — load context and resume
 kb-modules:
   start-session/session-anchor: "2026-06-11T16:47:21.976Z"
   start-session/ensure-kb: "2026-07-02T12:15:28.436Z"
-  start-session/staleness-check: "2026-07-05T08:09:09.613Z"
+  start-session/staleness-check: "2026-07-05T08:30:58.231Z"
 ---
 
 # Session Start
@@ -121,7 +121,7 @@ Act on what it prints:
 - `stale` or `missing-marker` → tell the user: **"Stale skills: <list>. Run /skill-refresh to update."** For `global:`-prefixed skills, strip the `global:` prefix when naming the skill — the file to refresh is `~/.claude/skills/<skill>/SKILL.md`, not a project skill. For a stale `CLAUDE.md` entry, the refresh command is `kb skills refresh CLAUDE.md`.
 - `duplicate-marker` or `not-in-kb` → surface for manual attention (a malformed block, or a module renamed/removed in KB).
 - `untracked copy of managed skill` → advisory. Tell the user: **"Untracked copy of managed skill: <list> — consider wiring to KB modules."** Strip any `global:` prefix when naming it. Do NOT auto-fix — the user decides whether to wire the copy to KB modules.
-- **missing modules** (module-set drift) → the skill lacks modules its manifest requires. Tell the user: **"<skill> is missing modules: <list>. Run `kb skills refresh --add-missing <skill>`."** Strip any `global:` prefix when naming the skill.
+- **missing modules** (module-set drift) → the skill lacks modules its manifest requires. Tell the user: **"<skill> is missing modules: <list>. Run `cd "$(git rev-parse --show-toplevel)" && kb skills refresh --add-missing <skill>`."** Strip any `global:` prefix when naming the skill.
 - **extra modules** (or an **absent** architecture/stack variant) → surface for manual attention. The user decides whether to remove an extra module, or add a variant module for the stack (no auto-fix).
 
 Do NOT auto-refresh — the user decides when to update.
