@@ -3,10 +3,10 @@ name: end-session
 description: Limedice session cleanup — quality checks, ticket updates, knowledge capture
 kb-modules:
   end-session/notify-chatterbox: "2026-06-18T16:40:17.414Z"
-  end-session/record-session: "2026-06-11T16:56:39.287Z"
-  end-session/session-report: "2026-06-24T21:17:04.852Z"
+  end-session/record-session: "2026-07-06T20:01:12.640Z"
+  end-session/session-report: "2026-07-06T20:01:35.219Z"
   end-session/code-quality: "2026-07-02T12:15:28.520Z"
-  end-session/file-growth: "2026-06-11T16:47:22.058Z"
+  end-session/file-growth: "2026-07-06T20:01:16.712Z"
   end-session/testing: "2026-05-30T18:17:14.715Z"
   end-session/git-hygiene: "2026-05-30T18:17:14.716Z"
   end-session/ticket-update: "2026-05-30T18:17:14.717Z"
@@ -131,40 +131,18 @@ Ask Scott **one combined prompt** — this is the single interactive stop for se
 
 If the reply does not clearly contain both answers, ask one clarifying question. Carry the push answer forward to the Export/Push step — do not re-ask there. The success answer determines both the recorded `session_result` and the Session Report `Result` line — they must agree.
 
-Record session summary via API:
-```
-POST /api/v1/sessions
-{
-  "project": "<project>",
-  "summary": "<1-2 sentence summary>",
-  "decisions": "<key decisions made>",
-  "outcome": "<result>",
-  "follow_ups": "<any follow-up items>",
-  "files_modified": ["<from git diff --name-only <start_sha>..HEAD, using the session anchor's start_sha (cwd-validated); fall back to working-tree changes if no anchor>"],
-  "tags": ["<project>"],
-  "source_agent": "claude-code",
-  "session_result": "<success|partial|failure|unknown>"
-}
-```
+Then record the session, trigger co-occurrence, and close the anchor in one call (non-blocking — if it fails, report the error and continue):
 
-If KB is unreachable, skip — this is non-blocking.
-
-After recording, trigger co-occurrence updates using the `session_id` from the session anchor if present (`~/.knowledgebench/session-current-<project>.json`), otherwise the session ID noted at `/start-session`. Use that id — not the id returned by the session-recording POST, which identifies the history entry, not this live session. If neither is available, skip co-occurrence and report it as `—` in the Session Report:
-```
-POST /api/v1/maintenance/cooccurrence
-{"session_id": "<session-id>"}
-```
-
-Finally, mark the anchor closed so the next `/start-session` knows this session ended cleanly (best-effort):
 ```bash
-python - <<'PY' 2>/dev/null
-import json, datetime, pathlib
-p = pathlib.Path.home() / ".knowledgebench" / f"session-current-{pathlib.Path.cwd().resolve().name.lower()}.json"
-d = json.loads(p.read_text())
-d["ended_at"] = datetime.datetime.now().astimezone().isoformat()
-p.write_text(json.dumps(d, indent=2))
-PY
+kb session end \
+  --summary "<1-2 sentence summary>" \
+  --decisions "<key decisions made>" \
+  --outcome "<result>" \
+  --follow-ups "<any follow-up items>" \
+  --result <success|partial|failure|unknown>
 ```
+
+(`--summary -` reads long text from stdin.) The command POSTs the session record (`files_modified` computed from the session anchor's `start_sha`, degrading to working-tree changes when the anchor is missing or foreign), fires the co-occurrence update with the anchor's live `session_id` (not the history entry's id), and stamps `ended_at` on the anchor so the next `/start-session` sees a clean close. It prints one line — `session recorded #<id> (<result>) · co-occurrence <✓|—> · anchor closed <✓|—>` — carry those facts into the Session Report's `session` line.
 <!-- kb:end-session/record-session:end -->
 
 ## 9. Export DB and Push
@@ -177,56 +155,23 @@ Use the push answer from the combined success + push prompt (do not re-ask). Com
 ## 10. Session Report
 
 <!-- kb:end-session/session-report:begin -->
-Produce one fixed-shape **Session Report** block. Same lines, same order, every session — each fact is findable in the same place without scrolling back through the earlier steps. Use `—` for a line with nothing to report; never omit a line.
+Produce one fixed-shape **Session Report** block — same lines, same order, every session, so each fact is findable in the same place. The rendering lives in the CLI: build a JSON fact payload and pipe it through:
 
-**Terse-steps rule (applies to the whole skill):** while working the steps before this one, print one line per step — outcome only, plus anything that failed. Required prompts (file-growth ticket decisions and the success/push questions) are exempt and do not count against the one-line rule: ask only the question, wait for the answer, then print the step's one outcome line. All other detail defers to this report — it is the only thing Scott should need to read.
-
-**Facts only:** populate the report exclusively from what the earlier steps actually observed. If a field was not run or a count is unavailable, write `—`; never infer success. The answer to "Was this session successful?" determines the `Result` status and the recorded session result — they must agree. The outcome text after the status comes only from observed work; if nothing concise was observed, end the line after the status.
-
-Emit the report as a ` ```diff `-fenced code block — the language tag is what colours it in the terminal. Line-prefix semantics (first character of every report line):
-
-- `+` — healthy/positive line (renders green): successful result, green QA, clean git, recorded session
-- `-` — empty (`—`), declined, or failed line (renders red)
-- `!` — needs-attention line (renders orange): partial/unknown result, mixed outcomes, the whole *Follow-ups* section
-- two leading spaces — neutral line (plain): *Efficiency* and *Next session* sections
-- `! ═══ … ═══` — the first and last lines are horizontal rules prefixed with `!` (render orange, matching the Follow-ups section); the title lives inside the opening one
-
-A line that mixes states takes the worst element's prefix (`+` only when everything on the line is healthy, `-` only when entirely empty/negative, otherwise `!`).
-
-```diff
-! ═══ Session Report — <project> — <YYYY-MM-DD> ═══
-
-+ Result      <✔ success | ◐ partial | ✘ failure | ? unknown> — <one-line outcome vs the session goal>
-+ QA          build <✓|✗|—> · lint <✓|✗ (N errors)|—> · tests <passed>/<total> | —
-- Growth      <file (N lines) → ticket #id; file (N lines) → declined | —>
-+ Git         <N> commit(s) <short-shas> · tree <clean | dirty: N files> · push <✓ | declined | —>
-+ Tickets     <#id old_status→new_status | #id commented | #id created — one entry per ticket touched | —>
-+ Insights    <+N captured #ids · promoted → <domain> #id | —>
-+ Models      <SM#id updated | drift ticket #id raised | —>
-+ Session     recorded #<id> (<result>) · co-occurrence <✓ | —>
-+ Docs        PROGRESS.md <✓|—> · memory <N added/updated | —>
-
-! Follow-ups
-!   - <every unresolved item carried forward, one line each, ticket # where one exists — or "none">
-
-  Efficiency
-    - <top 1–2 findings from the session-reflection step, one line each — `—` if this skill has no reflection step>
-
-  Next session
-    - <the head of `kb ticket next` — name #id and title; it floats any `kb ticket sequence` override to the top>
-
-! ═══════════════════════════════════════════════════════
+```bash
+echo '<payload json>' | kb session report -
 ```
 
-(The `+`/`-` prefixes shown on the labelled lines above are illustrative — assign each line's prefix from its actual content per the semantics list.)
+Paste the command's output verbatim into a ` ```diff `-fenced code block (the language tag is what colours it in the terminal).
 
-Rules:
+**Terse-steps rule (applies to the whole skill):** while working the steps before this one, print one line per step — outcome only, plus anything that failed. Required prompts (file-growth ticket decisions and the success/push questions) are exempt: ask only the question, wait, then print the step's one outcome line. All other detail defers to this report — it is the only thing Scott should need to read.
 
-- Every labelled line appears every time — `—` beats absence; the fixed shape is the point. A line whose step doesn't exist in this skill (no file-growth check, no drift check) is simply `—`.
-- One entry per ticket touched; status transition where one happened, otherwise `commented`/`created`.
-- *Follow-ups* is the safety net: anything deferred with "later" during the session lands here or it is lost.
-- *Next session* is sourced from `kb ticket next` (nearest-milestone, highest-priority workable ticket; it floats any active `kb ticket sequence` override to the head). If a deliberate next-session order was agreed this session, persist it first with `kb ticket sequence set <ids> --note "<why>"` so the pin survives the context reset — then the line names the override head.
-- Hard cap ~30 lines. If a line would push past the cap, compress it to counts (e.g. `5 tickets advanced (#1611 #1266 #1256 #1542 #1535)`) and put the detail in a ticket comment or KB entry, referenced by id.
+**Facts only:** populate the payload exclusively from what the earlier steps actually observed. Omit a line's key when its step didn't run or found nothing — the CLI renders it as a red `—` line; never infer success. The step 5 success answer sets both the `result` line and the recorded session result — they must agree.
+
+Payload keys (all optional): `result`, `qa`, `growth`, `git`, `tickets`, `insights`, `models`, `session`, `docs` — each `{"status": "good|bad|warn|neutral", "text": "<line content>"}`, where good renders green `+`, bad red `-`, warn orange `!`, neutral plain. A line mixing states takes the worst element's status (`good` only when everything on the line is healthy). Plus `followUps` (array — every unresolved item carried forward, one per entry, ticket # where one exists; the safety net for anything deferred with "later"), `efficiency` (array — top 1–2 findings from the session-reflection step), and `next` (string).
+
+`git` and `next` are auto-derived when omitted (commits since the anchor's `start_sha` + tree state; the head of `kb ticket next`, which floats any `kb ticket sequence` override to the top). Supply `git` yourself to include the push outcome, and `next` when a deliberate next-session order was agreed — persist that first with `kb ticket sequence set <ids> --note "<why>"` so the pin survives the context reset.
+
+Line content conventions: Result `<✔ success | ◐ partial | ✘ failure | ? unknown> — <one-line outcome vs the session goal>`; QA `build <✓|✗|—> · lint <✓|✗ (N errors)|—> · tests <passed>/<total>`; Tickets one entry per ticket touched (status transition where one happened, otherwise `commented`/`created`); Session `recorded #<id> (<result>) · co-occurrence <✓|—>` from the `kb session end` output line. Hard cap ~30 lines — compress a long line to counts (e.g. `5 tickets advanced (#1611 #1266 …)`) and put the detail in a ticket comment or KB entry, referenced by id.
 
 ## After the report — prompt to clear context
 
@@ -247,26 +192,11 @@ The Session Report is the final output of `/end-session`. Once it has printed an
 <!-- kb:end-session/file-growth:begin -->
 Flag source files that grew large **this session** and may warrant a refactor ticket. Advisory only — Scott decides whether to raise the ticket. Skip silently if nothing crosses a threshold.
 
-Read the session-start sha from the session anchor written by `/start-session`. The anchor counts only if its `cwd` matches this directory — a stale or foreign anchor is treated as absent:
-
 ```bash
-START_SHA=$(python - <<'PY' 2>/dev/null
-import json, pathlib
-cwd = pathlib.Path.cwd().resolve()
-p = pathlib.Path.home() / ".knowledgebench" / f"session-current-{cwd.name.lower()}.json"
-a = json.loads(p.read_text())
-if a.get("cwd") == str(cwd) and a.get("start_sha"):
-    print(a["start_sha"])
-PY
-)
-if [ -n "$START_SHA" ]; then
-  kb file-growth --since "$START_SHA"
-else
-  kb file-growth
-fi
+kb file-growth --session
 ```
 
-The no-`--since` fallback inspects working-tree changes only (it cannot see files already committed this session) and prints a note saying so.
+`--session` scopes to this session's commits by reading `start_sha` from the session anchor written by `/start-session` (cwd-validated — a stale or foreign anchor is treated as absent and the command degrades to working-tree changes only, printing a note saying so).
 
 The command lists each changed source file at or over its per-language line threshold, skipping generated/vendored paths and deletions, and annotates any file already covered by an open refactor ticket (deduped by filename stem). It scopes strictly to files this session touched, so it will not re-nag pre-existing large files. Add `--json` for structured output.
 

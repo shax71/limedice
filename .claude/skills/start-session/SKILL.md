@@ -2,7 +2,7 @@
 name: start-session
 description: Limedice session initialization — load context and resume
 kb-modules:
-  start-session/session-anchor: "2026-06-11T16:47:21.976Z"
+  start-session/session-anchor: "2026-07-06T19:48:25.428Z"
   start-session/ensure-kb: "2026-07-02T12:15:28.436Z"
   start-session/staleness-check: "2026-07-05T08:30:58.231Z"
 ---
@@ -33,41 +33,19 @@ Step 3 returns last session, in-progress tickets, unresolved follow-ups, domain 
 ## Session Anchor
 
 <!-- kb:start-session/session-anchor:begin -->
-Generate a session UUID and capture the session-start commit, then persist both as the **session anchor**:
+Write the session anchor (session UUID + session-start commit) and persist it for `/end-session`:
 
 ```bash
-python - <<'PY'
-import json, subprocess, uuid, datetime, pathlib
-cwd = pathlib.Path.cwd().resolve()
-project = cwd.name.lower()
-res = subprocess.run(["git", "rev-parse", "--verify", "HEAD"], capture_output=True, text=True)
-sha = res.stdout.strip() if res.returncode == 0 else None
-path = pathlib.Path.home() / ".knowledgebench" / f"session-current-{project}.json"
-if path.exists():
-    try:
-        prev = json.loads(path.read_text())
-        if not prev.get("ended_at"):
-            print(f"WARNING: previous anchor (started {prev.get('started_at')}) was never closed — another session may be active in this project.")
-    except Exception:
-        pass
-anchor = {
-    "session_id": str(uuid.uuid4()),
-    "start_sha": sha,
-    "project": project,
-    "cwd": str(cwd),
-    "started_at": datetime.datetime.now().astimezone().isoformat(),
-}
-path.parent.mkdir(exist_ok=True)
-path.write_text(json.dumps(anchor, indent=2))
-print(json.dumps(anchor))
-PY
+kb session start
 ```
 
 Store the printed `session_id`. For the remainder of this session, include the header `X-KB-Session-Id: <session_id>` on **all** KB API requests (GET, POST, PUT, DELETE to `http://localhost:3012/api/v1/*`). This populates `session_access_log` and enables co-occurrence tracking and session hit counts.
 
-If the snippet prints the unclosed-anchor WARNING, surface it to the user — it usually means the previous session skipped `/end-session` (harmless) but can mean a second session is running in this project. If `start_sha` is null (not a git repository), say so: the end-session checks that depend on it will degrade to their fallbacks.
+Act on the command's output:
+- A stderr `WARNING: previous anchor ... was never closed` — surface it to the user. It usually means the previous session skipped `/end-session` (harmless) but can mean a second session is running in this project.
+- `"start_sha": null` (not a git repository) — say so: the end-session checks that depend on it degrade to their fallbacks.
 
-The anchor file is read by `/end-session`: `start_sha` scopes the file-growth and system-model drift checks to exactly this session's commits, and `session_id` drives the co-occurrence update. `/end-session` stamps `ended_at` when it closes the session. Do not delete the file mid-session.
+The anchor file (`~/.knowledgebench/session-current-<project>.json`) is read by `/end-session`: `start_sha` scopes the file-growth and system-model drift checks to exactly this session's commits, and `session_id` drives the co-occurrence update. `/end-session` stamps `ended_at` when it closes the session. Do not delete the file mid-session.
 <!-- kb:start-session/session-anchor:end -->
 
 ## 3. Resources
