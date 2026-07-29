@@ -53,22 +53,21 @@ DESIGN.md             Original design brief (kept for reference)
 <!-- kb:claude-md/ticketing:begin -->
 ## Ticketing
 
-KnowledgeBench's built-in ticketing. Dev server on port 3012; web UI at http://localhost:3012. Project auto-detects from cwd (lowercased) — override with `--project <name>`.
+KnowledgeBench's built-in ticketing. Project auto-detects from cwd
+(lowercased); override with `--project <name>`.
 
-| Action | Command |
-|--------|---------|
-| List open tickets | `kb ticket list --open` |
-| Compact list (for context) | `kb ticket list --open --format compact` |
-| Search tickets | `kb ticket search "term"` |
-| Show ticket | `kb ticket <id>` |
-| Create ticket | `kb ticket new --type <type> --title "text" --actor claude` |
-| Update status | `kb ticket update <id> --status <status> --actor claude` |
-| Add comment | `kb ticket comment <id> "text" --actor claude` |
-| Close ticket | `kb ticket close <id> --actor claude` |
-| Generate test plan | Run `/test-plan <id>` skill |
-| List milestones | `kb milestone list` |
+Before constructing or running a ticket or milestone command, retrieve the
+canonical CLI reference: `kb wiki get kb-cli-reference`. Do not guess commands,
+flags, ticket types or status transitions from memory. For workflow rules,
+query `kb query conventions --tags ticketing`. Test plans use `/test-plan <id>`.
 
-For ticketing workflow rules (statuses, plan rule, test plan rule, `--actor` convention): `kb query conventions --tags ticketing`.
+All ticket writes must include `--actor claude`. For ticket descriptions use
+`--description`; never use `--body` because it is silently ignored.
+
+**Model routing**: tickets tagged `fable` require Claude Fable — do not work
+them or delegate them to subagents on a lesser model; see KB convention #86.
+`--tags` on `kb ticket update` REPLACES the complete tag set — fetch the
+existing tags first.
 <!-- kb:claude-md/ticketing:end -->
 
 <!-- kb:claude-md/knowledge-base:begin -->

@@ -2,10 +2,10 @@
 name: end-session
 description: Limedice session cleanup — quality checks, ticket updates, knowledge capture
 kb-modules:
-  end-session/record-session: "2026-07-06T20:01:12.640Z"
+  end-session/record-session: "2026-07-23T10:41:53.232Z"
   end-session/session-report: "2026-07-06T20:01:35.219Z"
   end-session/code-quality: "2026-07-02T12:15:28.520Z"
-  end-session/file-growth: "2026-07-06T20:01:16.712Z"
+  end-session/file-growth: "2026-07-23T10:41:53.319Z"
   end-session/testing: "2026-05-30T18:17:14.715Z"
   end-session/git-hygiene: "2026-05-30T18:17:14.716Z"
   end-session/ticket-update: "2026-05-30T18:17:14.717Z"
@@ -112,11 +112,15 @@ Only publish rows Scott approves.
 
 
 <!-- kb:end-session/record-session:begin -->
-Ask Scott **one combined prompt** — this is the single interactive stop for session wrap-up (file-growth decisions, if this skill has that check, were already taken there):
+Ask Scott the session wrap-up questions using the **`AskUserQuestion` multi-choice widget** — never a typed free-text prompt. This is Scott's standing preference: typed replies to multi-part questions arrive incomplete (e.g. "success" answering only one of two), forcing clarifying round-trips. This is the single interactive stop for session wrap-up (file-growth decisions, if this skill has that check, were already taken there).
 
-**Was this session successful** (`success` / `partial` / `failure`; enter = `unknown`) **— and push to GitHub afterwards?** (yes/no)
+Issue **one initial `AskUserQuestion` call with two sub-questions** (use stable headers so a retry re-asks the same slot):
+1. **Was this session successful?** — options `success` / `partial` / `failure` / `unknown` (header `Result`).
+2. **Push to GitHub afterwards?** — options `yes` / `no` (header `Push`).
 
-If the reply does not clearly contain both answers, ask one clarifying question. Carry the push answer forward to the Export/Push step — do not re-ask there. The success answer determines both the recorded `session_result` and the Session Report `Result` line — they must agree.
+If an answer comes back missing or outside the listed options (widget dismissed, or an "Other" free-text reply), re-ask **only that sub-question** via `AskUserQuestion` — never fall back to a typed prompt. If `AskUserQuestion` is unavailable in the running agent, present the same options as a numbered inline prompt and wait for the selection.
+
+Carry the push answer forward to the Export/Push step — do not re-ask there. The result answer determines both the recorded `session_result` and the Session Report `Result` line — they must agree.
 
 Then record the session, trigger co-occurrence, and close the anchor in one call (non-blocking — if it fails, report the error and continue):
 
@@ -187,7 +191,7 @@ kb file-growth --session
 
 The command lists each changed source file at or over its per-language line threshold, skipping generated/vendored paths and deletions, and annotates any file already covered by an open refactor ticket (deduped by filename stem). It scopes strictly to files this session touched, so it will not re-nag pre-existing large files. Add `--json` for structured output.
 
-For each flagged file with **no** open refactor ticket, report one line and ask Scott: **"Raise a refactor ticket for <file>? (yes/no)"**. On yes:
+For each flagged file with **no** open refactor ticket, ask Scott whether to raise one using the **`AskUserQuestion` multi-choice widget** — never a typed yes/no prompt (Scott's standing preference for workflow prompts). The widget caps at 4 sub-questions per call, so issue `AskUserQuestion` calls of **up to four files each** — one sub-question per file (**"Raise a refactor ticket for <file> (<N> lines)?"**, options `yes` / `no`) — and continue in batches until every flagged file has an answer. If an answer comes back missing or outside the options, re-ask only that file via `AskUserQuestion`; if the widget is unavailable in the running agent, fall back to a numbered inline prompt. On yes:
 `kb ticket new --project <project> --type task --title "Refactor: split <file> (<N> lines)" --actor claude`
 
 Do not auto-create tickets.

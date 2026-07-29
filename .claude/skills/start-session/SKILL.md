@@ -3,8 +3,8 @@ name: start-session
 description: Limedice session initialization — load context and resume
 kb-modules:
   start-session/session-anchor: "2026-07-06T19:48:25.428Z"
-  start-session/ensure-kb: "2026-07-02T12:15:28.436Z"
-  start-session/staleness-check: "2026-07-05T08:30:58.231Z"
+  start-session/ensure-kb: "2026-07-16T08:38:17.857Z"
+  start-session/staleness-check: "2026-07-16T08:27:23.048Z"
 ---
 
 # Session Start
@@ -64,43 +64,26 @@ Available if needed during the session (do NOT read at startup):
 Summarise: branch, in-progress tickets, last session context. Ask: **What are we working on?**
 
 <!-- kb:start-session/ensure-kb:begin -->
-Before anything else, check whether KB is already reachable:
+Check KB is reachable before anything else:
 
 ```bash
-KB_URL=http://localhost:3012 kb status
+kb status
 ```
 
-- **If it succeeds** — KB is already running. Do NOT start another instance.
-- **If it fails** (connection refused / timeout) — KB runs as a launchd service (`com.scott.dev.knowledgebench`, KeepAlive). Restart it:
-  ```bash
-  launchctl kickstart -k "gui/$(id -u)/com.scott.dev.knowledgebench"
-  ```
-  Wait a few seconds, then re-run `kb status` to confirm it is up.
-- **If kickstart reports the service is not found**, bootstrap it, then kickstart again:
-  ```bash
-  launchctl bootstrap "gui/$(id -u)" "$HOME/Library/LaunchAgents/com.scott.dev.knowledgebench.plist"
-  launchctl kickstart -k "gui/$(id -u)/com.scott.dev.knowledgebench"
-  ```
-- **If it still will not start**, diagnose with `launchctl print "gui/$(id -u)/com.scott.dev.knowledgebench"` and check the log at `$HOME/.claude/logs/knowledgebench.log`, then surface the problem to the user.
-- Do NOT run `npm run dev &`: backgrounded shell execution is blocked by the sandbox, and outside the KnowledgeBench repo it starts the wrong dev server. The launchd agent is the only sanctioned way for agent sessions to (re)start KB.
+- **Succeeds** → KB is up; do not start another instance.
+- **Unreachable** → `kb status` prints the launchd recovery steps inline (kickstart, and bootstrap if the service is missing). Follow them and re-run. The full ladder (diagnosis, logs) is in **SM#24 (KB Deployment)** — `kb get system-models 24`, readable once KB is back.
+
+Never run `npm run dev &` to (re)start KB — the launchd agent (`com.scott.dev.knowledgebench`, KeepAlive) is the only sanctioned path.
 <!-- kb:start-session/ensure-kb:end -->
 
 <!-- kb:start-session/staleness-check:begin -->
-Check whether any local skill's embedded KB modules have drifted from KB:
+Check whether local skills' embedded KB modules have drifted from KB:
 
 ```bash
 kb skills check --global
 ```
 
-For every module named in a skill's `kb-modules` frontmatter, this compares the content between that module's `<!-- kb:NAME:begin -->` / `<!-- kb:NAME:end -->` markers in `.claude/skills/*/SKILL.md` against the module's current content in KB. It also covers marker-synced CLAUDE.md sections: entries reported as `CLAUDE.md` / `global:CLAUDE.md` are the project's root `CLAUDE.md` (or `~/.claude/CLAUDE.md`), discovered by their `<!-- kb:claude-md/NAME:... -->` markers alone — no frontmatter. `--global` also checks the global skill set at `~/.claude/skills` (reported with a `global:` prefix), so drift there is caught from any project. The comparison is **content-based, not date-based**, so it is immune to `updated_at` churn (a read bumps the timestamp; content does not). It also flags **untracked copies of managed skills**: a local skill directory whose name matches a KB module (e.g. dir `check` vs modules `check/*`) but whose `SKILL.md` has no `kb-modules` frontmatter — a hand-copied or pre-module copy the content diff cannot otherwise see. It also diffs each tracked skill's **declared module set** against a canonical per-skill manifest stored in KB, reporting modules that are **missing** (the manifest says the skill should carry them) or **extra** (declared but not in the manifest). A stack-dependent **variant group** (e.g. code-review's `architecture-*` module) reports its absence as advisory info, never as a missing module. It always exits 0 (untracked copies are advisory, never a failure). Add `--json` for structured output (includes an `untracked` array and a `moduleSets` array of per-skill module-set drift).
-
-Act on what it prints:
-- `all in sync` → say nothing (silent pass).
-- `stale` or `missing-marker` → tell the user: **"Stale skills: <list>. Run /skill-refresh to update."** For `global:`-prefixed skills, strip the `global:` prefix when naming the skill — the file to refresh is `~/.claude/skills/<skill>/SKILL.md`, not a project skill. For a stale `CLAUDE.md` entry, the refresh command is `kb skills refresh CLAUDE.md`.
-- `duplicate-marker` or `not-in-kb` → surface for manual attention (a malformed block, or a module renamed/removed in KB).
-- `untracked copy of managed skill` → advisory. Tell the user: **"Untracked copy of managed skill: <list> — consider wiring to KB modules."** Strip any `global:` prefix when naming it. Do NOT auto-fix — the user decides whether to wire the copy to KB modules.
-- **missing modules** (module-set drift) → the skill lacks modules its manifest requires. Tell the user: **"<skill> is missing modules: <list>. Run `cd "$(git rev-parse --show-toplevel)" && kb skills refresh --add-missing <skill>`."** Strip any `global:` prefix when naming the skill.
-- **extra modules** (or an **absent** architecture/stack variant) → surface for manual attention. The user decides whether to remove an extra module, or add a variant module for the stack (no auto-fix).
-
-Do NOT auto-refresh — the user decides when to update.
+Relay exactly what it prints; do NOT auto-fix (the user decides when to refresh):
+- `all in sync` → silent pass, say nothing.
+- On drift the command names the affected skills and the exact next step — `/skill-refresh` for stale/missing modules (a `global:<skill>` refreshes `~/.claude/skills/<skill>/SKILL.md`; a stale `CLAUDE.md` entry uses `kb skills refresh CLAUDE.md`), or `kb skills refresh --add-missing <skill>` for missing modules. Surface that guidance verbatim. It also flags `duplicate-marker`/`not-in-kb`, untracked copies of managed skills, and extra-modules / absent-variants for manual attention. Add `--json` for structured output.
 <!-- kb:start-session/staleness-check:end -->
