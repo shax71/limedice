@@ -52,7 +52,8 @@ window.onTurnstileError = function (code) {
     sections.forEach((s) => io.observe(s));
   }
 
-  // Contact form — validate + POST to /api/contact
+  // Contact form — validate + POST to the Cloudflare Worker
+  const CONTACT_ENDPOINT = 'https://limedice-contact.limedice.workers.dev/';
   const form = document.getElementById('contactForm');
   const status = document.getElementById('formStatus');
   const startedAtInput = document.getElementById('startedAt');
@@ -152,7 +153,7 @@ window.onTurnstileError = function (code) {
       };
 
       try {
-        const r = await fetch('/api/contact', {
+        const r = await fetch(CONTACT_ENDPOINT, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(payload),

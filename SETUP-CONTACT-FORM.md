@@ -1,64 +1,33 @@
-# Contact form — deployment setup
+# Contact form — setup and operations
 
-One-time steps to take the new contact form live. Roughly 45–60 minutes wall-clock, most of it waiting on DNS/propagation.
+How the contact form works and how to (re)deploy it.
 
-Order matters: each step's output feeds the next.
+## Architecture
 
----
+- **Site**: static, hosted on statichost.eu, deploys on push to `main`. No server-side code runs there.
+- **Handler**: Cloudflare Worker `limedice-contact` (`worker/` in this repo). The form on `www.limedice.com` POSTs cross-origin to the Worker's `workers.dev` URL.
+- **Mail**: the Worker sends via Microsoft Graph `sendMail` as `scott@limedice.com`, using an Entra app registration with application-permission `Mail.Send`, scoped to that one mailbox by an Exchange Application Access Policy.
+- **Anti-spam**: Cloudflare Turnstile (managed/invisible) + honeypot field + time-trap, all verified server-side in the Worker.
 
-## 1. Push the repo to GitHub
-
-Static Web Apps deploys from a git remote, so this is first.
-
-```bash
-cd C:/Users/ScottWatson/source/repos/limedice
-gh repo create shax71/limedice --public --source . --push
-```
-
-Check it's public and the default branch is `main`.
+History: the handler was an Azure Functions app on Azure Static Web Apps until the Azure subscription was deleted (June 2026). The Entra app registration, the Exchange access policy and the Turnstile site all live outside the subscription and survived; only the hosting moved.
 
 ---
 
-## 2. Register the Entra ID app (Graph `Mail.Send`)
+## One-time tenant setup (already done — kept for rebuild/rotation)
 
-In the Azure portal → **Microsoft Entra ID** → **App registrations** → **New registration**.
+### Entra ID app (Graph `Mail.Send`)
 
-- **Name:** `Lime Dice contact form`
-- **Supported account types:** Single tenant
-- **Redirect URI:** leave blank
+Azure portal → **Microsoft Entra ID** → **App registrations** → `Lime Dice contact form`.
 
-After creation, still inside that app:
+- **API permissions**: Microsoft Graph → Application permissions → `Mail.Send`, with admin consent granted (green ticks).
+- **Certificates & secrets**: client secret, 24-month expiry. **Copy the Value immediately** — shown once. Store in the password manager. When it expires: create a new secret here, then re-run `wrangler secret put CLIENT_SECRET`.
+- **Overview** page has the Application (client) ID and Directory (tenant) ID.
 
-### 2a. API permissions
+### Exchange Application Access Policy
 
-- **API permissions** → **Add** → **Microsoft Graph** → **Application permissions**.
-- Add `Mail.Send`.
-- Click **Grant admin consent for <your tenant>**. Must show green ticks.
-
-### 2b. Client secret
-
-- **Certificates & secrets** → **New client secret**.
-- Description: `limedice contact form`. Expiry: 24 months.
-- **Copy the *Value* immediately** — it's only shown once. Paste it somewhere safe (password manager).
-
-### 2c. Record IDs
-
-From the app **Overview** page, copy:
-- **Application (client) ID**
-- **Directory (tenant) ID**
-
-You now have three secrets: `TENANT_ID`, `CLIENT_ID`, `CLIENT_SECRET`.
-
----
-
-## 3. Scope the app to one mailbox
-
-Without this step, the app can send mail as **any** user in the tenant. You only want it sending as `scott@limedice.com`.
-
-Install the Exchange Online module if you haven't already, then run in a PowerShell window (you'll be prompted to sign in as a Global Admin):
+Restricts the app to sending as `scott@limedice.com` only (without it, `Mail.Send` can send as anyone in the tenant):
 
 ```powershell
-Install-Module ExchangeOnlineManagement -Scope CurrentUser
 Connect-ExchangeOnline
 
 New-ApplicationAccessPolicy `
@@ -68,154 +37,97 @@ New-ApplicationAccessPolicy `
   -Description "Lime Dice contact form can only send as scott@limedice.com"
 
 Test-ApplicationAccessPolicy -AppId <CLIENT_ID> -Identity scott@limedice.com
-# AccessCheckResult should be: Granted
-
-Test-ApplicationAccessPolicy -AppId <CLIENT_ID> -Identity <any-other-user@limedice.com>
-# AccessCheckResult should be: Denied
+# AccessCheckResult: Granted
 ```
 
-Replace `<CLIENT_ID>` with the value from step 2c.
+### Cloudflare Turnstile
 
-> The policy can take up to an hour to propagate. Move on; we'll verify later.
+dash.cloudflare.com → **Turnstile** → site `limedice`.
 
----
-
-## 4. Create a Cloudflare Turnstile site
-
-No DNS move required — Turnstile is DNS-independent.
-
-- Sign in at [dash.cloudflare.com](https://dash.cloudflare.com/) (free account is fine).
-- **Turnstile** → **Add site**.
-- **Site name:** `limedice`.
-- **Hostnames:** `limedice.com`, `www.limedice.com`. Add `localhost` while testing, remove it after go-live.
-- **Widget mode:** *Managed* (invisible unless suspicious).
-- Record two values:
-  - **Site key** (public, goes in the HTML).
-  - **Secret key** (private, goes in app settings).
+- Hostnames: `limedice.com`, `www.limedice.com` (add `localhost` only while testing locally).
+- Widget mode: Managed (invisible unless suspicious).
+- **Site key** is public, lives in `site/index.html` on the `cf-turnstile` div.
+- **Secret key** goes to the Worker via `wrangler secret put TURNSTILE_SECRET`.
 
 ---
 
-## 5. Switch limedice.com to custom DNS in Microsoft 365
+## Deploying the Worker
 
-M365 won't let you add arbitrary records (the one for Azure validation) while in "managed" mode.
+From the repo root (Cloudflare account login required once):
 
-- **Microsoft 365 admin centre** → **Settings** → **Domains** → **limedice.com** → **DNS records** tab.
-- Click **Manage DNS records yourself** (or equivalent wording). Confirm.
-- Your existing Exchange / Teams / Autodiscover records stay. You now just have the freedom to add extras.
-
----
-
-## 6. Create the Azure Static Web App
-
-- Azure portal → **Static Web Apps** → **Create**.
-- **Plan type:** Free.
-- **Region:** pick one near the UK (West Europe or North Europe).
-- **Deployment source:** GitHub. Authorise if prompted. Select the `shax71/limedice` repo, branch `main`.
-- **Build preset:** *Custom*.
-  - **App location:** `/`
-  - **Api location:** `api`
-  - **Output location:** leave blank
-- Review + create.
-
-Azure commits a workflow file to the repo at `.github/workflows/azure-static-web-apps-*.yml` and triggers the first deploy. Watch it finish on the **Actions** tab of the GitHub repo.
-
-Once green, hit the generated hostname (something like `delightful-pebble-0123.azurestaticapps.net`) — you should see the site.
-
----
-
-## 7. Bind limedice.com as a custom domain
-
-Inside the Static Web App → **Custom domains** → **Add**.
-
-- **Add custom domain on other DNS provider**.
-- Enter `limedice.com` → click **Next**.
-- Azure gives you a **TXT** record for validation. Copy the host and value.
-- Go back to M365 DNS records for limedice.com → **Add record** → **TXT** with the values Azure gave you. Save.
-- Back in Azure → click **Add** / **Validate**. Wait 1–5 minutes for the tick.
-
-Once validated, Azure tells you which **A record** (or ALIAS, if available) to point at. Add it in M365 DNS.
-
-Also add:
-- **CNAME** `www` → `<your-swa-hostname>.azurestaticapps.net`.
-
-Wait for propagation (5–30 min; check with `nslookup limedice.com`). Browse to `https://limedice.com` — certificate should auto-provision (can take a few more minutes).
-
----
-
-## 8. Fill in the Turnstile site key in index.html
-
-Open `index.html`, find this line:
-
-```html
-<div class="cf-turnstile" data-sitekey="TURNSTILE_SITEKEY_PLACEHOLDER" data-size="invisible" data-callback="onTurnstileToken"></div>
+```bash
+cd worker
+npx wrangler login
+npx wrangler deploy
 ```
 
-Replace `TURNSTILE_SITEKEY_PLACEHOLDER` with the **site key** from step 4. Commit + push; Azure redeploys automatically.
+`deploy` prints the Worker URL: `https://limedice-contact.<your-subdomain>.workers.dev`. That URL goes in `site/main.js` as `CONTACT_ENDPOINT` (trailing slash fine).
 
-> The site key is public and safe in markup. The *secret* key is not — it goes in step 9.
+### Secrets
+
+Each command prompts for the value (paste from the password manager):
+
+```bash
+npx wrangler secret put TENANT_ID
+npx wrangler secret put CLIENT_ID
+npx wrangler secret put CLIENT_SECRET
+npx wrangler secret put TURNSTILE_SECRET
+npx wrangler secret put MAILBOX_UPN          # scott@limedice.com
+npx wrangler secret put DESTINATION_EMAIL    # scott@limedice.com
+npx wrangler secret put ALLOWED_ORIGIN       # https://www.limedice.com
+```
+
+Secrets take effect immediately; no redeploy needed.
+
+`ALLOWED_ORIGIN` must match the hostname the browser is actually on. It gates both the Worker's origin check and its `Access-Control-Allow-Origin` header, so a mismatch fails twice over — update it if the primary hostname ever changes.
+
+### Logs
+
+```bash
+npx wrangler tail limedice-contact
+```
+
+Rejections log as `contact rejected: <reason>`; the full Turnstile siteverify response is logged so `error-codes` are visible. Logs also stream in the Cloudflare dashboard under the Worker's **Logs** tab.
 
 ---
 
-## 9. Set application settings on the Static Web App
+## End-to-end verification
 
-Static Web App → **Configuration** → **Application settings** → **Add** each of the following:
-
-| Name | Value |
-|------|-------|
-| `TENANT_ID` | from step 2c |
-| `CLIENT_ID` | from step 2c |
-| `CLIENT_SECRET` | from step 2b |
-| `MAILBOX_UPN` | `scott@limedice.com` |
-| `DESTINATION_EMAIL` | `scott@limedice.com` |
-| `TURNSTILE_SECRET` | from step 4 |
-| `ALLOWED_ORIGIN` | `https://limedice.com` |
-
-**Save**. Azure restarts the managed Function; changes are live within ~30 seconds.
-
----
-
-## 10. End-to-end verification
-
-1. **Happy path.** Open `https://limedice.com`, fill the form, submit. Expect a success banner and an email at `scott@limedice.com` with **Reply-To** set to the address you submitted.
-2. **Honeypot.** DevTools → `document.querySelector('input[name=website]').value = 'x'` → submit. Should show the generic error; no email should arrive. Check Application Insights logs for `contact rejected: honeypot`.
-3. **Time-trap.** DevTools → `document.getElementById('startedAt').value = Date.now()` → submit immediately. Generic error, no email. Logs should show `contact rejected: time-trap`.
-4. **Turnstile bypass.** From a terminal:
+1. **Happy path.** On `https://www.limedice.com`, fill the form, submit. Expect the success banner and an email at `scott@limedice.com` with **Reply-To** set to the submitted address.
+2. **Honeypot.** DevTools: `document.querySelector('input[name=website]').value = 'x'` → submit. Generic error, no email, log line `contact rejected: honeypot`.
+3. **Time-trap.** DevTools: `document.getElementById('startedAt').value = Date.now()` → submit immediately. Generic error, log line `contact rejected: time-trap`.
+4. **Turnstile bypass.**
    ```bash
-   curl -X POST https://limedice.com/api/contact \
+   curl -X POST https://limedice-contact.<subdomain>.workers.dev/ \
      -H 'Content-Type: application/json' \
-     -H 'Origin: https://limedice.com' \
-     -d '{"name":"x","email":"a@b.co","brief":"x","turnstileToken":"fake","startedAt":0,"website":""}'
+     -H 'Origin: https://www.limedice.com' \
+     -d '{"name":"x","email":"a@b.co","brief":"x","turnstileToken":"fake","startedAt":1,"website":""}'
    ```
-   Expect `{"ok":false,...}`. No email.
-5. **Origin check.** Same `curl` with `-H 'Origin: https://example.com'`. Generic failure. Logs show `contact rejected: origin https://example.com`.
-6. **Scope enforcement (step 3 verification).** In the Static Web App configuration, change `MAILBOX_UPN` to a different tenant user for a moment. Submit the form. Expect `{"ok":false}` and a Graph 403 in logs (confirms the Application Access Policy is in force). **Revert to `scott@limedice.com` immediately.**
-7. **Deliverability.** Inspect the received email's headers — it's internal Scott→Scott so SPF/DKIM aren't the gate; confirm it lands in Inbox, not Focused/Other or Junk.
+   Expect `{"ok":false,...}` (time-trap fires first with `startedAt:1` in the past — that's fine; use a recent `startedAt` to reach the Turnstile check). No email.
+5. **Origin check.** Same `curl` with `-H 'Origin: https://example.com'`, or no Origin header at all. Generic failure, log line `contact rejected: origin ...`. (Unlike the Azure version, a missing Origin is rejected too.)
+6. **Deliverability.** Confirm the mail lands in Inbox, not Junk/Other.
 
 ---
 
 ## Local development
 
-Install the SWA CLI once:
+The Worker runs locally with secrets from a git-ignored `.dev.vars` file in `worker/`:
 
 ```bash
-npm i -g @azure/static-web-apps-cli
-cd api && npm i && cd ..
+cd worker
+cat > .dev.vars <<'EOF'
+TENANT_ID=...
+CLIENT_ID=...
+CLIENT_SECRET=...
+TURNSTILE_SECRET=...
+MAILBOX_UPN=scott@limedice.com
+DESTINATION_EMAIL=scott@limedice.com
+ALLOWED_ORIGIN=http://localhost:8080
+EOF
+npx wrangler dev
 ```
 
-Copy the example secrets file (do **not** commit the real one — already in `.gitignore`):
-
-```bash
-cp api/local.settings.json.example api/local.settings.json
-# edit api/local.settings.json with real secrets
-```
-
-Run the site + Function together:
-
-```bash
-swa start . --api-location api
-```
-
-Site serves at `http://localhost:4280` with `/api/contact` wired up to the local Function. Turnstile's `localhost` hostname from step 4 must still be in your Turnstile hostname list.
+Serve the site from another terminal (`python -m http.server 8080` in `site/`), point `CONTACT_ENDPOINT` at `http://localhost:8787/` temporarily, and add `localhost` to the Turnstile hostname allowlist for the duration. Revert both afterwards.
 
 ---
 
@@ -223,25 +135,10 @@ Site serves at `http://localhost:4280` with `/api/contact` wired up to the local
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| `403 Forbidden` from Graph | Admin consent not granted, or Application Access Policy blocks the mailbox | Re-check step 2a (green ticks), re-run `Test-ApplicationAccessPolicy` from step 3 |
-| `401 Unauthorized` from Graph | `CLIENT_SECRET` wrong, expired, or has leading/trailing whitespace | Regenerate in step 2b, update app setting in step 9 |
-| Form shows "Couldn't verify" | Turnstile hasn't finished its silent challenge before the 5-second client poll times out, or site key wrong | Wait a few seconds on the page before clicking Send; otherwise check step 8 and the hostnames in step 4 |
-| Form returns `{ok:false}` from `/api/contact` (HTTP 200 with generic error) | One of the server-side checks rejected: origin mismatch, Turnstile siteverify failed, honeypot, time-trap, or Graph exception | Read App Insights `traces \| where message startswith "contact"` for the specific `contact rejected: <reason>` line; the handler logs the full siteverify response so Turnstile `error-codes` are visible |
-| Turnstile fails with `110200` on the Azure default hostname (`*.N.azurestaticapps.net`) even when the hostname is in the allowlist | Observed during Lime Dice go-live — Turnstile's hostname validation appears unreliable against the Azure default hostname format. Cause not established; re-typing the hostname, waiting several hours, and using a fresh browser context did not clear it | Don't test on the Azure default hostname. Add the custom domain (`www.limedice.com`) first, point `ALLOWED_ORIGIN` at it, and test there |
-| Form returns success but no email arrives | App Access Policy scope mismatch; mailbox UPN typo | Step 3 + `MAILBOX_UPN` in step 9 |
-| Custom domain stuck on validation | TXT record not yet propagated | Give it 15 min; `nslookup -type=TXT limedice.com` to check |
-| SWA build fails on `api/` | Function runtime mismatch | Confirm Node 20 in `api/package.json` engines; SWA picks that up automatically |
-| `ALLOWED_ORIGIN` must match the hostname the browser is actually using | Easy to forget after DNS changes. A mismatch causes `/api/contact` to reject with `contact rejected: origin <host>` before Turnstile is even checked | Update the SWA Configuration app setting whenever the test hostname changes; Function restarts in ~30s. Value can omit the scheme (handler normalises both forms) |
-
----
-
-## What already exists in the repo
-
-You don't need to write any code — it's all in this commit:
-
-- `api/contact/index.js` — the Function handler (Graph `sendMail`, Turnstile verify, honeypot, time-trap).
-- `api/host.json`, `api/package.json`, `api/contact/function.json` — Function scaffolding.
-- `staticwebapp.config.json` — routes + security headers + CSP including Turnstile.
-- `index.html` — Turnstile widget + honeypot + hidden timestamp input (site key placeholder in step 8).
-- `main.js` — client-side validation + Turnstile token + POST to `/api/contact`.
-- `styles.css` — `.hp` honeypot styling.
+| `403 Forbidden` from Graph | Admin consent not granted, or the Application Access Policy blocks the mailbox | Check green ticks on the app's API permissions; re-run `Test-ApplicationAccessPolicy` |
+| `401`/`invalid_client` in `token request failed` log | `CLIENT_SECRET` wrong, expired, or has stray whitespace | New secret on the app registration, `wrangler secret put CLIENT_SECRET` |
+| Form shows "Couldn't verify" | Turnstile hasn't finished its silent challenge before the 5-second client poll times out, or site key wrong | Wait a few seconds before clicking Send; check the site key in `index.html` and the Turnstile hostname list |
+| Form returns the generic error | A server-side check rejected: origin, Turnstile, honeypot, time-trap, or a Graph exception | `npx wrangler tail limedice-contact` and read the `contact rejected: <reason>` line |
+| Turnstile `110200` in the siteverify `error-codes` | Hostname not in the Turnstile allowlist — observed during the Azure go-live against the SWA default hostname even when allowlisted (cause never established) | Test on `www.limedice.com`, not on a platform default hostname |
+| Success banner but no email arrives | Access-policy scope mismatch; `MAILBOX_UPN` typo | Verify `MAILBOX_UPN` secret and the access policy |
+| Browser console shows a CORS error | `ALLOWED_ORIGIN` doesn't match the page's hostname | `wrangler secret put ALLOWED_ORIGIN` with the exact origin |
