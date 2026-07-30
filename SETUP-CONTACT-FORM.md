@@ -23,21 +23,26 @@ Azure portal → **Microsoft Entra ID** → **App registrations** → `Lime Dice
 - **Certificates & secrets**: client secret, 24-month expiry. **Copy the Value immediately** — shown once. Store in the password manager. When it expires: create a new secret here, then re-run `wrangler secret put CLIENT_SECRET`.
 - **Overview** page has the Application (client) ID and Directory (tenant) ID.
 
-### Exchange Application Access Policy
+### Exchange RBAC for Applications
 
-Restricts the app to sending as `scott@limedice.com` only (without it, `Mail.Send` can send as anyone in the tenant):
+Restricts the app to sending as `scott@limedice.com` only (without it, `Mail.Send` can send as anyone in the tenant). Done July 2026, replacing the original `New-ApplicationAccessPolicy` from April 2026 — Microsoft retired Application Access Policies, and once the tenant migrated, app-only Graph mail was blocked with `403 ErrorAccessDenied: "Access to OData is disabled: [RAOP] : Blocked by tenant configured AppOnly AccessPolicy settings"` until this replacement was in place.
+
+`<SP_OBJECT_ID>` is the **service principal** Object ID: App registrations → `Lime Dice contact form` → Overview → follow the "Managed application in local directory" link → Object ID. (The app registration's own Object ID is a different object and will fail with `AADServicePrincipalNotFound`.)
 
 ```powershell
 Connect-ExchangeOnline
 
-New-ApplicationAccessPolicy `
-  -AppId <CLIENT_ID> `
-  -PolicyScopeGroupId scott@limedice.com `
-  -AccessRight RestrictAccess `
-  -Description "Lime Dice contact form can only send as scott@limedice.com"
+# One-time, if scope creation complains: hydrate the tenant config.
+# Returns nothing on success; check with Get-OrganizationConfig | fl IsDehydrated
+# (want False). Cmdlet authorisation can lag the hydration by an hour or more.
+Enable-OrganizationCustomization
 
-Test-ApplicationAccessPolicy -AppId <CLIENT_ID> -Identity scott@limedice.com
-# AccessCheckResult: Granted
+New-ServicePrincipal -AppId <CLIENT_ID> -ObjectId <SP_OBJECT_ID> -DisplayName "Lime Dice contact form"
+New-ManagementScope -Name "LimeDiceContactForm" -RecipientRestrictionFilter "PrimarySmtpAddress -eq 'scott@limedice.com'"
+New-ManagementRoleAssignment -App <CLIENT_ID> -Role "Application Mail.Send" -CustomResourceScope "LimeDiceContactForm"
+
+Test-ServicePrincipalAuthorization -Identity <CLIENT_ID> -Resource scott@limedice.com
+# expect: Application Mail.Send | LimeDiceContactForm | CustomRecipientScope | InScope True
 ```
 
 ### Cloudflare Turnstile
@@ -135,7 +140,8 @@ Serve the site from another terminal (`python -m http.server 8080` in `site/`), 
 
 | Symptom | Likely cause | Fix |
 |---------|--------------|-----|
-| `403 Forbidden` from Graph | Admin consent not granted, or the Application Access Policy blocks the mailbox | Check green ticks on the app's API permissions; re-run `Test-ApplicationAccessPolicy` |
+| `403 Forbidden` from Graph | Admin consent not granted, or the RBAC scope doesn't cover the mailbox | Check green ticks on the app's API permissions; re-run `Test-ServicePrincipalAuthorization` |
+| `403` with `[RAOP] : Blocked by tenant configured AppOnly AccessPolicy settings` | Tenant blocks app-only mailbox access and no RBAC for Applications assignment grants it | Run the RBAC setup above |
 | `401`/`invalid_client` in `token request failed` log | `CLIENT_SECRET` wrong, expired, or has stray whitespace | New secret on the app registration, `wrangler secret put CLIENT_SECRET` |
 | Form shows "Couldn't verify" | Turnstile hasn't finished its silent challenge before the 5-second client poll times out, or site key wrong | Wait a few seconds before clicking Send; check the site key in `index.html` and the Turnstile hostname list |
 | Form returns the generic error | A server-side check rejected: origin, Turnstile, honeypot, time-trap, or a Graph exception | `npx wrangler tail limedice-contact` and read the `contact rejected: <reason>` line |
