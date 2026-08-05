@@ -19,3 +19,6 @@ Thumbs.db
 
 # Dev-time reference, not shipped
 Lime Dice Design System.zip
+
+# Wrangler local state
+worker/.wrangler/
