@@ -85,6 +85,7 @@ Set `export KB_URL=http://localhost:3012` once at session start (the `/start-ses
 - Push cadence: `/end-session` asks whether to push
 - Never force-push to `main`/`master`
 - Commit only when asked; stage files by name; keep commits scoped and conventional
+- Commit messages: conventional commits, ≤50 char subject, why over what
 <!-- kb:claude-md/github:end -->
 
 - **Repo:** TBD — public repo under `shax71` for GitHub Pages hosting at `limedice.com`
