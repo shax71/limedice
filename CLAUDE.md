@@ -5,13 +5,7 @@ Static one-page marketing website for **Lime Dice Ltd**, a digital health consul
 <!-- kb:claude-md/shell-behaviour:begin -->
 ## Shell Behaviour Rules
 
-Resolve the project root dynamically — see KB convention #34 (`kb get conventions 34`):
-
-- ALWAYS prefix bash commands with `cd "$(git rev-parse --show-toplevel)" && <command>`
-- NEVER rely on `$CLAUDE_PROJECT_DIR` — it is not exported into the Bash tool shell and expands to empty
-- NEVER use hardcoded absolute paths — they break across machines and OSes
-- NEVER use bare relative paths like `cd src` — cwd is not guaranteed
-- This applies to ALL tool calls, hooks, skills and bash blocks
+Portable paths in committed shell instructions and hook configuration are governed by KB convention #34 (`kb get conventions 34`). Consult it before authoring or changing those instructions. Its examples are scoped recipes, not a requirement for every runtime Bash call; runtime calls follow the harness.
 <!-- kb:claude-md/shell-behaviour:end -->
 
 ## Stack

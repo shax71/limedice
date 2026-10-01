@@ -138,8 +138,7 @@ kb session end \
 
 ## 9. Export DB and Push
 
-1. `KB_URL=http://localhost:3012 kb export /Users/dev/source/repos/KnowledgeBench/kb-data.json`
-2. Commit the export in the KnowledgeBench repo if changed.
+1. `kb export --commit --message "chore(kb): export after <short session descriptor>"` — path-free (#1635): writes `kb-data.json` to the `git_backup_path` repo and commits only that file.
 
 Use the push answer from the combined success + push prompt (do not re-ask). Commit the export regardless of the push answer — never leave it staged or uncommitted. Push only on yes.
 
