@@ -11,7 +11,7 @@ kb-modules:
 
 ## KB CLI
 
-All KB operations use the `kb` CLI. Always set: `export KB_URL=http://localhost:3012`
+All KB operations use the `kb` CLI.
 
 ## 1. Current State
 
@@ -19,7 +19,7 @@ Run these checks:
 
 1. `git branch --show-current && git status --short`
 2. `git log --oneline -5`
-3. `KB_URL=http://localhost:3012 kb resume-pack --project limedice`
+3. `kb resume-pack --project limedice`
 
 Step 3 returns last session, in-progress tickets, unresolved follow-ups, domain counts, conventions, recent changes, and accepted ADRs in a single call. Read it as your resume context.
 
@@ -57,10 +57,10 @@ Available if needed during the session (do NOT read at startup):
 - `CLAUDE.md` — project conventions and CLI reference
 - `DESIGN.md` — original design brief
 - `_design_extract/README.md` — canonical design-system source of truth (copy, tokens, UI kit)
-- `KB_URL=http://localhost:3012 kb query system-models --tags limedice`
-- `KB_URL=http://localhost:3012 kb query conventions --tags limedice`
-- `KB_URL=http://localhost:3012 kb query insights --tags limedice`
-- `KB_URL=http://localhost:3012 kb search "<term>"` — cross-domain search
+- `kb query system-models --tags limedice`
+- `kb query conventions --tags limedice`
+- `kb query insights --tags limedice`
+- `kb search "<term>"` — cross-domain search
 
 ## 4. Ready
 

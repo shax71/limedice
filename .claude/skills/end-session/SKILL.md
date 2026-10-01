@@ -21,7 +21,7 @@ Work through each section. Do not skip steps.
 
 ## KB CLI
 
-All ticket operations: `KB_URL=http://localhost:3012 kb ticket <command> [args]`
+All ticket operations: `kb ticket <command> [args]`
 Always use `--actor claude` when Claude Code creates or modifies tickets.
 
 ## 1. Code Quality
@@ -74,7 +74,7 @@ Static site — file size bounds are lenient but still worth watching:
 ## 6. Ticket Update
 
 If a ticket was being worked on:
-- [ ] Status updated: `KB_URL=http://localhost:3012 kb ticket update <id> --status <status> --actor claude`
+- [ ] Status updated: `kb ticket update <id> --status <status> --actor claude`
 - [ ] Journal comment describing what was accomplished
 - [ ] **If status set to `testing`:** Generate and POST a test plan
 
@@ -93,8 +93,8 @@ Review the session for lessons, patterns, decisions, and gotchas worth preservin
 ### 7b. Check for overlaps
 
 For each candidate, query KB to confirm it doesn't already exist:
-- `KB_URL=http://localhost:3012 kb query insights --tags <topic>`
-- `KB_URL=http://localhost:3012 kb query conventions --tags <topic>`
+- `kb query insights --tags <topic>`
+- `kb query conventions --tags <topic>`
 
 ### 7c. Present proposal table
 

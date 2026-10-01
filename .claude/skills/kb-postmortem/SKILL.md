@@ -16,7 +16,7 @@ Work the four steps in order. Stop at any step if the fix is not postmortem-wort
 
 ## KB API
 
-All writes go to `http://localhost:3012/api/v1/...`. Ticket ops use `KB_URL=http://localhost:3012 kb ticket <command>` with `--actor claude`.
+All writes go to `http://localhost:3012/api/v1/...`. Ticket ops use `kb ticket <command>` with `--actor claude`.
 
 ## 1. Identify the Fix
 
