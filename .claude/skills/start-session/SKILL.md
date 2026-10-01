@@ -2,7 +2,7 @@
 name: start-session
 description: Limedice session initialization — load context and resume
 kb-modules:
-  start-session/session-anchor: "2026-07-06T19:48:25.428Z"
+  start-session/session-anchor: "2026-08-03T13:34:12.462Z"
   start-session/ensure-kb: "2026-07-16T08:38:17.857Z"
   start-session/staleness-check: "2026-07-16T08:27:23.048Z"
 ---
@@ -39,13 +39,16 @@ Write the session anchor (session UUID + session-start commit) and persist it fo
 kb session start
 ```
 
-Store the printed `session_id`. For the remainder of this session, include the header `X-KB-Session-Id: <session_id>` on **all** KB API requests (GET, POST, PUT, DELETE to `http://localhost:3012/api/v1/*`). This populates `session_access_log` and enables co-occurrence tracking and session hit counts.
+Store the printed `session_id`. For the remainder of this session, include the header `X-KB-Session-Id: <session_id>` on **all** KB API requests (GET, POST, PUT, DELETE to `http://localhost:3012/api/v1/*`). This populates `session_access_log`, enables co-occurrence tracking and session hit counts, and — since #2918 — refreshes this session's **lease** (every header-carrying call is a heartbeat).
 
-Act on the command's output:
+`kb session start` also acquires the project's session lease. Act on its output:
+- **Lease refused (`lease_held`, non-zero exit)** — another session holds a live lease (seen within the TTL). The refusal enumerates the valid next actions; surface them to the user and STOP — do not retry `kb session start` in a loop. If the user confirms the other session is dead or should be evicted, run `kb session takeover` (this is logged as an override event and writes a fresh anchor).
+- **Stale-lease notice** — the previous lease was idle past the TTL and was auto-released (printed + logged as an override event). Mention it in one line; this is the normal path after a crashed/unclosed session.
+- **`lease unavailable — KB unreachable`** — the session proceeds without a lease; say so.
 - A stderr `WARNING: previous anchor ... was never closed` — surface it to the user. It usually means the previous session skipped `/end-session` (harmless) but can mean a second session is running in this project.
 - `"start_sha": null` (not a git repository) — say so: the end-session checks that depend on it degrade to their fallbacks.
 
-The anchor file (`~/.knowledgebench/session-current-<project>.json`) is read by `/end-session`: `start_sha` scopes the file-growth and system-model drift checks to exactly this session's commits, and `session_id` drives the co-occurrence update. `/end-session` stamps `ended_at` when it closes the session. Do not delete the file mid-session.
+The anchor file (`~/.knowledgebench/session-current-<project>.json`) is read by `/end-session`: `start_sha` scopes the file-growth and system-model drift checks to exactly this session's commits, and `session_id` drives the co-occurrence update. `/end-session` stamps `ended_at` when it closes the session and releases the lease. Do not delete the file mid-session.
 <!-- kb:start-session/session-anchor:end -->
 
 ## 3. Resources
