@@ -69,7 +69,7 @@ existing tags first.
 
 All cross-project knowledge is stored in KB. If unfamiliar with KB, read: `kb get conventions 29`.
 
-Set `export KB_URL=http://localhost:3012` once at session start (the `/start-session` skill does this), then use bare `kb` commands. Query before working in any area:
+Use bare `kb` commands (see `kb wiki get kb-cli-reference`). Query before working in any area:
 
 - `kb query conventions --tags <topic>` — rules and standards
 - `kb query system-models --tags <topic>` — how tools and systems behave

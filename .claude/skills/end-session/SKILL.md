@@ -10,7 +10,7 @@ kb-modules:
   end-session/git-hygiene: "2026-05-30T18:17:14.716Z"
   end-session/ticket-update: "2026-05-30T18:17:14.717Z"
   end-session/capture-insights: "2026-05-30T18:17:14.719Z"
-  end-session/system-models-drift: "2026-06-11T16:43:41.072Z"
+  end-session/system-models-drift: "2026-10-01T13:58:21.446Z"
 ---
 
 # Session Stop
@@ -243,7 +243,7 @@ Check whether KB system-models for this project have drifted from what the sessi
    - Schema / migrations: edits under `src/db/migrations/` — usually documented in deployment or data-model system-models.
 
 2. List candidate system-models:
-   `KB_URL=http://localhost:3012 kb query system-models --project <project> --fields id,name,tags,updated_at`
+   `kb query system-models --project <project> --fields id,name,tags,updated_at`
 
 3. For each candidate whose tags or topic overlap the touched areas:
    - Read it: `kb get system-models <id>`
