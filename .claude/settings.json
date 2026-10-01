@@ -1,9 +1,7 @@
 {
   "permissions": {
     "allow": [
-      "Read(//tmp/**)",
-      "Read(//c/tmp/**)",
-      "Read(//c/Users/ScottWatson/AppData/Local/Temp/**)"
+      "Read(//tmp/**)"
     ]
   },
   "hooks": {
