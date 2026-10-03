@@ -138,7 +138,7 @@ kb session end \
 
 ## 9. Export DB and Push
 
-1. `kb export --commit --message "chore(kb): export after <short session descriptor>"` — path-free (#1635): writes `kb-data.json` to the `git_backup_path` repo and commits only that file.
+1. `kb export --commit --message "chore(kb): export after <short session descriptor>"` — path-free (#1635): writes the per-domain `kb-data/` folder (one JSON file per table) to the `git_backup_path` repo and commits only that folder.
 
 Use the push answer from the combined success + push prompt (do not re-ask). Commit the export regardless of the push answer — never leave it staged or uncommitted. Push only on yes.
 
