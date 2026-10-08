@@ -74,7 +74,7 @@ Use bare `kb` commands (see `kb wiki get kb-cli-reference`). Query before workin
 - `kb query conventions --tags <topic>` — rules and standards
 - `kb query system-models --tags <topic>` — how tools and systems behave
 - `kb query insights --tags <topic>` — patterns from experience
-- `kb query concepts` — project glossary (project auto-detects from cwd)
+- `kb query concepts --project <name>` — project glossary (own entries plus globals; `--global false` to exclude globals)
 - `kb search "<term>"` — cross-domain search
 - `kb query symbols --q "<name>"` — indexed code symbols; check before grepping
 <!-- kb:claude-md/knowledge-base:end -->
