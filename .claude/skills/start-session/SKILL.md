@@ -51,18 +51,7 @@ Store the printed `session_id`. For the remainder of this session, include the h
 The anchor file (`~/.knowledgebench/session-current-<project>.json`) is read by `/end-session`: `start_sha` scopes the file-growth and system-model drift checks to exactly this session's commits, and `session_id` drives the co-occurrence update. `/end-session` stamps `ended_at` when it closes the session and releases the lease. Do not delete the file mid-session.
 <!-- kb:start-session/session-anchor:end -->
 
-## 3. Resources
-
-Available if needed during the session (do NOT read at startup):
-- `CLAUDE.md` — project conventions and CLI reference
-- `DESIGN.md` — original design brief
-- `_design_extract/README.md` — canonical design-system source of truth (copy, tokens, UI kit)
-- `kb query system-models --tags limedice`
-- `kb query conventions --tags limedice`
-- `kb query insights --tags limedice`
-- `kb search "<term>"` — cross-domain search
-
-## 4. Ready
+## 3. Ready
 
 Summarise: branch, in-progress tickets, last session context. Ask: **What are we working on?**
 
