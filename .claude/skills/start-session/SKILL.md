@@ -2,7 +2,7 @@
 name: start-session
 description: Limedice session initialization — load context and resume
 kb-modules:
-  start-session/session-anchor: "2026-08-03T13:34:12.462Z"
+  start-session/session-anchor: "2026-10-08T20:11:25.758Z"
   start-session/ensure-kb: "2026-07-16T08:38:17.857Z"
   start-session/staleness-check: "2026-10-07T06:40:34.624Z"
   start-session/handback-scan: "2026-10-07T06:39:15.967Z"
@@ -43,7 +43,7 @@ kb session start
 Store the printed `session_id`. For the remainder of this session, include the header `X-KB-Session-Id: <session_id>` on **all** KB API requests (GET, POST, PUT, DELETE to `http://localhost:3012/api/v1/*`). This populates `session_access_log`, enables co-occurrence tracking and session hit counts, and — since #2918 — refreshes this session's **lease** (every header-carrying call is a heartbeat).
 
 `kb session start` also acquires the project's session lease. Act on its output:
-- **Lease refused (`lease_held`, non-zero exit)** — another session holds a live lease (seen within the TTL). The refusal enumerates the valid next actions; surface them to the user and STOP — do not retry `kb session start` in a loop. If the user confirms the other session is dead or should be evicted, run `kb session takeover` (this is logged as an override event and writes a fresh anchor).
+- **Lease refused (`lease_held`, non-zero exit)** — another session holds a live lease (seen within the TTL). The refusal enumerates the valid next actions; surface them to the user and STOP — do not retry `kb session start` in a loop. If the user confirms the other session is dead or should be evicted, run the exact `kb session takeover --expect <session_id>` command the refusal hint prints (logged as an override event; writes a fresh anchor). `--expect` makes the steal conditional (#3085): if a different session has taken the lease since the refusal, takeover is refused (`lease_holder_changed`, non-zero exit, no anchor written) — surface that new refusal and ask again. Never fall back to a bare `kb session takeover`.
 - **Stale-lease notice** — the previous lease was idle past the TTL and was auto-released (printed + logged as an override event). Mention it in one line; this is the normal path after a crashed/unclosed session.
 - **`lease unavailable — KB unreachable`** — the session proceeds without a lease; say so.
 - A stderr `WARNING: previous anchor ... was never closed` — surface it to the user. It usually means the previous session skipped `/end-session` (harmless) but can mean a second session is running in this project.
