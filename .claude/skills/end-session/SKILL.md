@@ -10,7 +10,7 @@ kb-modules:
   end-session/git-hygiene: "2026-05-30T18:17:14.716Z"
   end-session/ticket-update: "2026-05-30T18:17:14.717Z"
   end-session/capture-insights: "2026-05-30T18:17:14.719Z"
-  end-session/system-models-drift: "2026-10-01T13:58:21.446Z"
+  end-session/system-models-drift: "2026-10-08T19:13:13.142Z"
 ---
 
 # Session Stop
@@ -246,7 +246,7 @@ Check whether KB system-models for this project have drifted from what the sessi
    `kb query system-models --project <project> --fields id,name,tags,updated_at`
 
 3. For each candidate whose tags or topic overlap the touched areas:
-   - Read it: `kb get system-models <id>`
+   - Read all of them in one Bash call, not one request per model: `for id in <id> <id> …; do kb get system-models $id; done`. (Batch only reads that are not expected to fail: in a parallel Bash batch one failing call cancels the others; one looped call does not have this problem.)
    - Decide: does the session's change contradict, extend, or supersede what the model documents?
      - If a documented behaviour changed (e.g. a flag, command, file path, tool list) → drift.
      - If the session only added a new behaviour the model doesn't mention but should → drift.
