@@ -4,8 +4,8 @@ description: Capture a KB insight after fixing a bug — extract the root cause,
 kb-modules:
   kb-postmortem/identify-fix: "2026-07-02T12:15:28.602Z"
   kb-postmortem/extract-pattern: "2026-05-18T06:16:10.180Z"
-  kb-postmortem/dedupe-check: "2026-06-18T21:23:27.512Z"
-  kb-postmortem/write-insight: "2026-06-18T21:23:27.519Z"
+  kb-postmortem/dedupe-check: "2026-10-08T18:12:07.725Z"
+  kb-postmortem/write-insight: "2026-10-08T18:12:07.649Z"
 ---
 
 # KB Postmortem
@@ -14,9 +14,9 @@ Convert a bug fix into a reusable prevention rule, stored as a KB Insight so fut
 
 Work the four steps in order. Stop at any step if the fix is not postmortem-worthy.
 
-## KB API
+## KB CLI
 
-All writes go to `http://localhost:3012/api/v1/...`. Ticket ops use `kb ticket <command>` with `--actor claude`.
+All KB reads and writes use bare `kb` commands — never a hardcoded host. Ticket ops use `kb ticket <command>` with `--actor claude`.
 
 ## 1. Identify the Fix
 
@@ -74,8 +74,17 @@ Avoid stamping a near-duplicate on top of an existing insight.
 
 3. Read any candidate whose title looks adjacent. If one covers the same case:
    - **Update** it — bump `confidence` to the next tier (`low` → `medium` → `high`), bump `frequency` (`once` → `occasional` → `recurring`), and append a `## Recurrence — <date>` block to `content` citing the new commit/ticket.
-   - PUT `/api/v1/insights/<id>` with the updated fields.
+   - Run `kb get insights <id>` first: it prints the current `content` and the `_version` token. `--content` replaces the whole field, so send the full existing content plus the new block — never the block alone (command below). Keep the quoted heredoc delimiter at column 0, and choose another one if the content contains a line equal to `KB_INSIGHT_EOF`.
    - **Do not** write a new insight. Tell Scott which one was reinforced.
+
+```bash
+kb update insights <id> --confidence <tier> --frequency <tier> --if-version <_version> --content - <<'KB_INSIGHT_EOF'
+<full existing content>
+
+## Recurrence — <date>
+<new commit/ticket>
+KB_INSIGHT_EOF
+```
 
 4. If nothing matches, proceed to `write-insight`.
 
@@ -85,27 +94,36 @@ Avoid stamping a near-duplicate on top of an existing insight.
 ## 4. Write the Insight
 
 <!-- kb:kb-postmortem/write-insight:begin -->
-POST to `http://localhost:3012/api/v1/insights`:
+Create the insight with the `kb` CLI. Pass the content on stdin:
 
-```json
-{
-  "name": "<imperative prevention rule, ≤80 chars>",
-  "content": "## Symptom\n<one sentence>\n\n## Root cause\n<one to three sentences — cite file path + line where possible>\n\n## Prevention\n<the imperative rule from extract-pattern, expanded with a code example if useful>\n\n## Source\nCommit <short-sha>  •  Ticket #<id-if-any>  •  <ISO date>",
-  "tags": ["<topical-tag>", "<bug-category>", "<project>"],
-  "project": "<lowercased project>",
-  "confidence": "low",
-  "frequency": "once"
-}
+- Single-quote `--name` so the shell does not expand backticks, `$()` or `$vars` in it; write an embedded apostrophe as `'\''`.
+- The heredoc delimiter is quoted (no expansion in the body). If the content contains a line equal to `KB_INSIGHT_EOF`, choose another delimiter. Keep the closing delimiter at column 0.
+
+```bash
+kb create insights --name '<imperative prevention rule, ≤80 chars>' \
+  --tags <topical-tag>,<bug-category>,<project> --project <project> --content - <<'KB_INSIGHT_EOF'
+## Symptom
+<one sentence>
+
+## Root cause
+<one to three sentences — cite file path + line where possible>
+
+## Prevention
+<the imperative rule from extract-pattern, expanded with a code example if useful>
+
+## Source
+Commit <short-sha>  •  Ticket #<id-if-any>  •  <ISO date>
+KB_INSIGHT_EOF
 ```
 
 Rules:
 - `name` IS the prevention rule in imperative form, not a description of the bug. Future Claude sessions search by `name` — make it match what someone *about to make the mistake* would type.
-- Include the project tag in `tags` AND set the separate `project` field — they are queried independently.
-- `confidence: "low"` + `frequency: "once"` are correct defaults for a first sighting; `dedupe-check` already handles recurrences via PUT.
+- Include the project tag in `--tags` AND pass `--project` — they are queried independently, and knowledge creates never auto-detect the project.
+- `confidence` defaults to `low` and `frequency` to `once` — correct for a first sighting; `dedupe-check` already handles recurrences via `kb update`.
 - If there is no commit yet, ask Scott to commit first. Insights without a commit reference rot fast.
 
-After POSTing, report:
-- New insight id
+After creating, report:
+- New insight id (from the `Created insights #<id>` line)
 - The exact `name` field (so Scott sees what future Claude will match against)
 - A note if any related Convention or ADR might want updating
 <!-- kb:kb-postmortem/write-insight:end -->
