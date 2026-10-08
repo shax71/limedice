@@ -4,7 +4,7 @@ description: Pre-commit audit for UI consistency — design tokens, component pr
 kb-modules:
   ui-consistency/scope-detection: "2026-05-18T06:26:06.439Z"
   ui-consistency/audit-checks: "2026-06-26T10:31:47.491Z"
-  ui-consistency/a11y-from-kb: "2026-05-18T06:26:06.456Z"
+  ui-consistency/a11y-from-kb: "2026-10-08T18:51:22.450Z"
   ui-consistency/dom-pedant-handoff: "2026-05-18T06:26:06.462Z"
   ui-consistency/plan-mode: "2026-05-18T06:26:06.469Z"
   ui-consistency/report-and-fix: "2026-05-18T06:26:06.476Z"
@@ -117,21 +117,17 @@ See `site/colors_and_type.css`. This file defines the brand colour palette and t
 <!-- kb:ui-consistency/a11y-from-kb:begin -->
 Pull project-relevant a11y rules from KB Insights and apply them as audit checks.
 
-1. Query insights tagged with the relevant a11y topics:
+1. Query insights tagged with the relevant a11y topics — one OR-tag query, then the project-scoped one:
    ```
-   kb query insights --tags a11y
-   kb query insights --tags modals
-   kb query insights --tags forms
-   kb query insights --tags keyboard
-   kb query insights --project <project> --tags a11y
+   kb query insights --tags a11y,modals,forms,keyboard --tags-mode any --limit 100
+   kb query insights --project <project> --tags a11y --limit 100
    ```
+   `kb query` returns 20 rows by default, so keep `--limit` above the result count. If a result reports more entries than it shows, raise the limit and run it again. The project-scoped query stays: the first query can miss project entries.
 
 2. Filter to insights whose `name` reads as an imperative prevention rule (the `/kb-postmortem` shape). Each becomes a check.
 
 3. For each rule, derive a detector if one is obvious:
    - "Trap Tab in destructive confirm" → detect `<dialog>` or `role="dialog"` open paths without a Tab cycle handler nearby
-   - "Defer role=tree until keyboard nav" → flag `role="tree"` / `role="treeitem"` without `onKeyDown` or `tabIndex` handling
-   - "Capture pre-modal focus via focusin on modal root" → flag modal open paths that read `document.activeElement` at the call site rather than via `focusin` on the modal root
    - "Provide secure-context fallback for `crypto.randomUUID`" → flag direct calls without a `typeof crypto?.randomUUID === "function"` guard or `?.` fallback
 
 4. If a rule has no mechanical detector, list it under "manual review" — the human (or `dom-pedant` agent) needs to eyeball it. Do not silently drop it.
