@@ -58,8 +58,6 @@ query `kb query conventions --tags ticketing`. Test plans use `/test-plan <id>`.
 All ticket writes must include `--actor claude`. For ticket descriptions use
 `--description`; never use `--body` because it is silently ignored.
 
-**Model routing**: tickets tagged `fable` require Claude Fable — do not work
-them or delegate them to subagents on a lesser model; see KB convention #86.
 `--tags` on `kb ticket update` REPLACES the complete tag set — fetch the
 existing tags first.
 <!-- kb:claude-md/ticketing:end -->
