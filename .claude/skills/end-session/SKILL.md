@@ -3,9 +3,8 @@ name: end-session
 description: Limedice session cleanup — quality checks, ticket updates, knowledge capture
 kb-modules:
   end-session/record-session: "2026-07-23T10:41:53.232Z"
-  end-session/session-report: "2026-07-06T20:01:35.219Z"
+  end-session/session-report: "2026-10-23T03:39:10.844Z"
   end-session/code-quality: "2026-07-02T12:15:28.520Z"
-  end-session/file-growth: "2026-07-23T10:41:53.319Z"
   end-session/testing: "2026-05-30T18:17:14.715Z"
   end-session/git-hygiene: "2026-10-21T08:26:55.920Z"
   end-session/ticket-update: "2026-05-30T18:17:14.717Z"
@@ -15,7 +14,7 @@ kb-modules:
 
 # Session Stop
 
-**Output discipline:** every step before the final Session Report prints one line — outcome only, plus anything that failed. Required prompts (file-growth ticket decisions and the success/push questions) are exempt: ask only the question, wait, then print the step's outcome line. All other detail defers to the Session Report, the single block Scott reads.
+**Output discipline:** every step before the final Session Report prints one line — outcome only, plus anything that failed. The required prompt (the success/push question) is exempt: ask only the question, wait, then print the step's outcome line. All other detail defers to the Session Report, the single block Scott reads.
 
 Work through each section. Do not skip steps.
 
@@ -49,13 +48,6 @@ No automated tests. Verify in browser:
 - [ ] Contact form validation fires on empty submit; mailto opens on valid submit
 - [ ] Section highlight in top nav tracks scroll position
 - [ ] Lucide icons render (no empty `<i>` tags)
-
-## 3. File Size Check
-
-Static site — file size bounds are lenient but still worth watching:
-- `wc -l index.html styles.css main.js`
-- `index.html` over 500 lines: consider extracting sections into partials (would require a build step)
-- `styles.css` over 800 lines: consider splitting by concern (tokens, layout, components)
 
 ## 4. Project-Specific Checks
 
@@ -153,11 +145,11 @@ echo '<payload json>' | kb session report -
 
 Paste the command's output verbatim into a ` ```diff `-fenced code block (the language tag is what colours it in the terminal).
 
-**Terse-steps rule (applies to the whole skill):** while working the steps before this one, print one line per step — outcome only, plus anything that failed. Required prompts (file-growth ticket decisions and the success/push questions) are exempt: ask only the question, wait, then print the step's one outcome line. All other detail defers to this report — it is the only thing Scott should need to read.
+**Terse-steps rule (applies to the whole skill):** while working the steps before this one, print one line per step — outcome only, plus anything that failed. The required prompt (the success/push question) is exempt: ask only the question, wait, then print the step's one outcome line. All other detail defers to this report — it is the only thing Scott should need to read.
 
 **Facts only:** populate the payload exclusively from what the earlier steps actually observed. Omit a line's key when its step didn't run or found nothing — the CLI renders it as a red `—` line; never infer success. The step 5 success answer sets both the `result` line and the recorded session result — they must agree.
 
-Payload keys (all optional): `result`, `qa`, `growth`, `git`, `tickets`, `insights`, `models`, `session`, `docs` — each `{"status": "good|bad|warn|neutral", "text": "<line content>"}`, where good renders green `+`, bad red `-`, warn orange `!`, neutral plain. A line mixing states takes the worst element's status (`good` only when everything on the line is healthy). Plus `followUps` (array — every unresolved item carried forward, one per entry, ticket # where one exists; the safety net for anything deferred with "later"), `efficiency` (array — top 1–2 findings from the session-reflection step), and `next` (string).
+Payload keys (all optional): `result`, `qa`, `git`, `tickets`, `insights`, `models`, `session`, `docs` — each `{"status": "good|bad|warn|neutral", "text": "<line content>"}`, where good renders green `+`, bad red `-`, warn orange `!`, neutral plain. A line mixing states takes the worst element's status (`good` only when everything on the line is healthy). Plus `followUps` (array — every unresolved item carried forward, one per entry, ticket # where one exists; the safety net for anything deferred with "later"), `efficiency` (array — top 1–2 findings from the session-reflection step), and `next` (string).
 
 `git` and `next` are auto-derived when omitted (commits since the anchor's `start_sha` + tree state; the head of `kb ticket next`, which floats any `kb ticket sequence` override to the top). Supply `git` yourself to include the push outcome, and `next` when a deliberate next-session order was agreed — persist that first with `kb ticket sequence set <ids> --note "<why>"` so the pin survives the context reset.
 
@@ -178,23 +170,6 @@ The Session Report is the final output of `/end-session`. Once it has printed an
 - [ ] No raw debug output in production code (`console.*` in JS/TS, `println!`/`eprintln!`/`dbg!` in Rust, `print()` in Python) — use the structured logger
 - [ ] Code follows existing architecture patterns
 <!-- kb:end-session/code-quality:end -->
-
-<!-- kb:end-session/file-growth:begin -->
-Flag source files that grew large **this session** and may warrant a refactor ticket. Advisory only — Scott decides whether to raise the ticket. Skip silently if nothing crosses a threshold.
-
-```bash
-kb file-growth --session
-```
-
-`--session` scopes to this session's commits by reading `start_sha` from the session anchor written by `/start-session` (cwd-validated — a stale or foreign anchor is treated as absent and the command degrades to working-tree changes only, printing a note saying so).
-
-The command lists each changed source file at or over its per-language line threshold, skipping generated/vendored paths and deletions, and annotates any file already covered by an open refactor ticket (deduped by filename stem). It scopes strictly to files this session touched, so it will not re-nag pre-existing large files. Add `--json` for structured output.
-
-For each flagged file with **no** open refactor ticket, ask Scott whether to raise one using the **`AskUserQuestion` multi-choice widget** — never a typed yes/no prompt (Scott's standing preference for workflow prompts). The widget caps at 4 sub-questions per call, so issue `AskUserQuestion` calls of **up to four files each** — one sub-question per file (**"Raise a refactor ticket for <file> (<N> lines)?"**, options `yes` / `no`) — and continue in batches until every flagged file has an answer. If an answer comes back missing or outside the options, re-ask only that file via `AskUserQuestion`; if the widget is unavailable in the running agent, fall back to a numbered inline prompt. On yes:
-`kb ticket new --project <project> --type task --title "Refactor: split <file> (<N> lines)" --actor claude`
-
-Do not auto-create tickets.
-<!-- kb:end-session/file-growth:end -->
 
 <!-- kb:end-session/testing:begin -->
 - [ ] All tests pass
