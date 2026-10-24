@@ -2,12 +2,12 @@
 name: end-session
 description: Limedice session cleanup — quality checks, ticket updates, knowledge capture
 kb-modules:
-  end-session/record-session: "2026-07-23T10:41:53.232Z"
-  end-session/session-report: "2026-10-23T03:39:10.844Z"
+  end-session/record-session: "2026-10-24T20:12:39.092Z"
+  end-session/session-report: "2026-10-24T20:12:39.173Z"
   end-session/code-quality: "2026-07-02T12:15:28.520Z"
   end-session/testing: "2026-05-30T18:17:14.715Z"
   end-session/git-hygiene: "2026-10-21T08:26:55.920Z"
-  end-session/ticket-update: "2026-05-30T18:17:14.717Z"
+  end-session/ticket-update: "2026-10-24T20:12:39.008Z"
   end-session/capture-insights: "2026-05-30T18:17:14.719Z"
   end-session/system-models-drift: "2026-10-10T12:19:16.437Z"
 ---
@@ -104,28 +104,70 @@ Only publish rows Scott approves.
 
 
 <!-- kb:end-session/record-session:begin -->
-Ask Scott the session wrap-up questions using the **`AskUserQuestion` multi-choice widget** — never a typed free-text prompt. This is Scott's standing preference: typed replies to multi-part questions arrive incomplete (e.g. "success" answering only one of two), forcing clarifying round-trips. This is the single interactive stop for session wrap-up (file-growth decisions, if this skill has that check, were already taken there).
+This step has two parts: the wrap-up question with a draft record, then the handover item dispositions. The final record (`kb session end --file`) runs later, in the Session Report step, after the export, commit and push step. Do not run it here.
 
-Issue **one initial `AskUserQuestion` call with two sub-questions** (use stable headers so a retry re-asks the same slot):
+### Wrap-up question
+
+Ask Scott the wrap-up questions with the **`AskUserQuestion` multi-choice widget**. Never use a typed free-text prompt: typed replies to multi-part questions arrive incomplete (e.g. "success" answering only one of two) and cause clarifying round-trips. This is the single interactive stop for session wrap-up.
+
+First run `kb ticket sequence show`. Then send **one `AskUserQuestion` call** with stable headers, so that a retry asks the same slot again:
 1. **Was this session successful?** — options `success` / `partial` / `failure` / `unknown` (header `Result`).
 2. **Push to GitHub afterwards?** — options `yes` / `no` (header `Push`).
+3. **Only when `kb ticket sequence show` printed a `Sequence override`** (not `No sequence override set`): **Keep the Next Up pin?** — options `keep` / `replace` / `clear` (header `Pin`). The question names the pinned order and its state. The `replace` option names the new order you propose. With no pin, there is no third sub-question.
 
-If an answer comes back missing or outside the listed options (widget dismissed, or an "Other" free-text reply), re-ask **only that sub-question** via `AskUserQuestion` — never fall back to a typed prompt. If `AskUserQuestion` is unavailable in the running agent, present the same options as a numbered inline prompt and wait for the selection.
+If an answer is missing or outside the listed options (widget dismissed, or an "Other" free-text reply), ask **only that sub-question** again with `AskUserQuestion`. Never fall back to a typed prompt. If `AskUserQuestion` is not available in the running agent, show the same options as a numbered inline prompt and wait for the selection.
 
-Carry the push answer forward to the Export/Push step — do not re-ask there. The result answer determines both the recorded `session_result` and the Session Report `Result` line — they must agree.
+Act on the answers:
+- `Result` sets both the payload `result` and the Session Report `Result` line. They must agree.
+- `Push` goes forward to the export/push step (or to the Session Report step when this skill has no push step). Do not ask again there.
+- `Pin`: `keep` → nothing. `clear` → `kb ticket sequence clear`. `replace` → read `kb ticket sequence show`, then `kb ticket sequence set <id>,<id>,… --note "<why>"` (one comma list) with the order named in the option. KB never clears a pin automatically.
 
-Then record the session, trigger co-occurrence, and close the anchor in one call (non-blocking — if it fails, report the error and continue):
+### Draft
+
+Save the payload as a draft immediately after the wrap-up answers:
 
 ```bash
-kb session end \
-  --summary "<1-2 sentence summary>" \
-  --decisions "<key decisions made>" \
-  --outcome "<result>" \
-  --follow-ups "<any follow-up items>" \
-  --result <success|partial|failure|unknown>
+kb session end --draft --file - <<'JSON'
+{ …payload… }
+JSON
 ```
 
-(`--summary -` reads long text from stdin.) The command POSTs the session record (`files_modified` computed from the session anchor's `start_sha`, degrading to working-tree changes when the anchor is missing or foreign), fires the co-occurrence update with the anchor's live `session_id` (not the history entry's id), and stamps `ended_at` on the anchor so the next `/start-session` sees a clean close. It prints one line — `session recorded #<id> (<result>) · co-occurrence <✓|—> · anchor closed <✓|—>` — carry those facts into the Session Report's `session` line.
+The command prints `draft saved <path>` and records nothing. If the session stops before the final record, the next `kb session start` on this machine replays the draft as an `unknown` session. Each time the payload changes, run the command again with the whole payload: each run replaces the draft.
+
+Payload (one JSON object):
+- `summary` — 1–2 sentences. `decisions` — the key decisions. `result` — the `Result` answer.
+- `items` — the handover changes (next part). Never type `seen`: the CLI adds the ids that `kb session start` printed.
+- `report` — the Session Report facts (Session Report step).
+
+### Item dispositions
+
+The handover holds stored reminders, each with a state. List the open ones with `kb session items` (`- [#id] <text> — carried N×`). The reminders that `kb session start` printed at the start of this session are this session's to mark (the anchor's `handover_seen`). The server refuses a mark on any other item (`not_seen`).
+
+For new handover content, decide each candidate in this order:
+1. It names an open ticket (a follow-up, a pending check, a caveat) → write it to that ticket's journal: `kb ticket comment <id> "…" --actor claude`. Do not open an item.
+2. It is live state that KB or git already shows (commits not pushed, uncommitted files, kept worktrees, human checks pending, idle in-progress tickets, a stale pin, batch plans) → nothing. The resume pack computes these lines.
+3. It is work with a clear owner and outcome → a ticket (`kb ticket new …`). A decision that Scott owes → a ticket with `--assignee user`.
+4. Anything else → a reminder: one line in `items.open`. When an open item already says the same thing, mark that item and do not open a new one.
+
+Mark each seen item from evidence in KB, git and this session:
+- `done` — evidence shows that it happened. Add `{"id": 12, "note": "<the evidence: commit, ticket, answer>"}` to `items.done`.
+- `ticketed` — it moved to a ticket. Add `{"id": 15, "ticket": 4107}` to `items.ticketed`.
+- `dropped` — only when evidence shows that it is obsolete. Add `{"id": 14, "why": "<names a commit, ticket, file or answer>"}` to `items.dropped`. The server refuses an empty `why`.
+- `carry` — every other case, including ambiguous evidence. Add the id to `items.carry`. When in doubt, carry. Never drop on a guess.
+
+An item already carried twice (`carried 2×`) cannot be carried again. Mark it `done`, `dropped` or `ticketed`; a decision that Scott owes becomes a ticket with `--assignee user`. A seen item that you do not mark is carried automatically but shows as `unreviewed` (red), or as `overdue` (red) when it is at the limit. Put each id in one list only. Then save the draft again with the items.
+
+To close or reopen one item at any time: `kb session item <id> --state done|dropped|ticketed [--note <t>] [--ticket <n>]`, or `kb session item <id> --reopen`.
+
+### Final record
+
+The Session Report step runs `kb session end --file -` with the same heredoc payload, completed with the push outcome. The command posts the session and its item changes in one transaction, runs the co-occurrence update, releases the lease, stamps `ended_at` on the anchor, and prints the record line `session recorded #<id> (<result>) · co-occurrence <✓|—> · anchor closed <✓|—>` and then the Session Report.
+
+Act on its output:
+- `session end refused: …` — nothing was recorded and the anchor is still open. Run the command again from the checkout where `kb session start` ran. When the folder name is not the project name, add `--project <name>`. Do not report the session as recorded.
+- `session record failed: …` and `pending — replays at next kb session start on this machine` — the anchor closed and the payload is kept. Report this on the Session line. A `stored … · request …` hash line means that this session is already recorded with a different payload (`payload_mismatch`): report both hashes.
+- `server predates handover items — sent legacy follow_ups` — the KB server is older than handover items, so the new reminders went as text. Report it.
+- A usage error for `--file` (a `kb` CLI older than the payload form) — record with the flag form instead: `kb session end --summary "…" --decisions "…" --follow-ups "<the items.open texts, separated by ;>" --result <result>`, then render the report with `echo '<report json>' | kb session report -`.
 <!-- kb:end-session/record-session:end -->
 
 ## 9. Export DB and Push
@@ -137,23 +179,25 @@ Use the push answer from the combined success + push prompt (do not re-ask). Com
 ## 10. Session Report
 
 <!-- kb:end-session/session-report:begin -->
-Produce one fixed-shape **Session Report** block — same lines, same order, every session, so each fact is findable in the same place. The rendering lives in the CLI: build a JSON fact payload and pipe it through:
+Produce one fixed-shape **Session Report** block: the same lines in the same order every session, so that each fact is always in the same place. The final record prints it. Run the record now, after the export, commit and push step, so that the record includes the push outcome. If `Push` was `yes` and no earlier step of this skill pushed, push first (`git push origin $(git branch --show-current)`) and put the outcome in `report.git`. Then record:
 
 ```bash
-echo '<payload json>' | kb session report -
+kb session end --file - <<'JSON'
+{ …the payload from the wrap-up step, with the report completed… }
+JSON
 ```
 
-Paste the command's output verbatim into a ` ```diff `-fenced code block (the language tag is what colours it in the terminal).
+Paste the command's output verbatim into a ` ```diff `-fenced code block (the language tag is what colours it in the terminal). Act on its record line as the wrap-up step says (a refusal, a pending file, the legacy warning).
 
-**Terse-steps rule (applies to the whole skill):** while working the steps before this one, print one line per step — outcome only, plus anything that failed. The required prompt (the success/push question) is exempt: ask only the question, wait, then print the step's one outcome line. All other detail defers to this report — it is the only thing Scott should need to read.
+**Terse-steps rule (applies to the whole skill):** while working the steps before this one, print one line per step — outcome only, plus anything that failed. The wrap-up question is exempt: ask only the question, wait, then print the step's one outcome line. All other detail defers to this report — it is the only thing Scott should need to read.
 
-**Facts only:** populate the payload exclusively from what the earlier steps actually observed. Omit a line's key when its step didn't run or found nothing — the CLI renders it as a red `—` line; never infer success. The step 5 success answer sets both the `result` line and the recorded session result — they must agree.
+**Facts only:** fill the payload's `report` object only from what the earlier steps actually observed. Omit a line's key when its step did not run or found nothing — the CLI renders it as a red `—` line; never infer success. The wrap-up `Result` answer sets both `report.result` and the payload `result` — they must agree.
 
-Payload keys (all optional): `result`, `qa`, `git`, `tickets`, `insights`, `models`, `session`, `docs` — each `{"status": "good|bad|warn|neutral", "text": "<line content>"}`, where good renders green `+`, bad red `-`, warn orange `!`, neutral plain. A line mixing states takes the worst element's status (`good` only when everything on the line is healthy). Plus `followUps` (array — every unresolved item carried forward, one per entry, ticket # where one exists; the safety net for anything deferred with "later"), `efficiency` (array — top 1–2 findings from the session-reflection step), and `next` (string).
+`report` keys (all optional): `result`, `qa`, `git`, `tickets`, `insights`, `models`, `docs` — each `{"status": "good|bad|warn|neutral", "text": "<line content>"}`, where good renders green `+`, bad red `-`, warn orange `!`, neutral plain. A line mixing states takes the worst element's status (`good` only when everything on the line is healthy). Plus `efficiency` (array — top 1–2 findings from the session-reflection step) and `next` (string). The CLI fills the `Session` line from the record, and builds the **Handover** section from the server's applied result (opened, closed with each state, carried, `unreviewed`, `overdue`, refusals, conflicts), never from the requested dispositions. There is no `followUps` key: anything carried forward is a handover item, a ticket or a ticket journal note (wrap-up step).
 
-`git` and `next` are auto-derived when omitted (commits since the anchor's `start_sha` + tree state; the head of `kb ticket next`, which floats any `kb ticket sequence` override to the top). Supply `git` yourself to include the push outcome, and `next` when a deliberate next-session order was agreed — persist that first with `kb ticket sequence set <ids> --note "<why>"` so the pin survives the context reset.
+`git` and `next` are derived when omitted (commits since the anchor's `start_sha`, tree state and push state; the head of `kb ticket next`, which floats any `kb ticket sequence` pin to the top). Supply `git` yourself to include the push outcome, and `next` when a deliberate next-session order was agreed — persist that order first with the `Pin` answer (`kb ticket sequence set <ids> --note "<why>"`) so the pin survives the context reset.
 
-Line content conventions: Result `<✔ success | ◐ partial | ✘ failure | ? unknown> — <one-line outcome vs the session goal>`; QA `build <✓|✗|—> · lint <✓|✗ (N errors)|—> · tests <passed>/<total>`; Tickets one entry per ticket touched (status transition where one happened, otherwise `commented`/`created`); Session `recorded #<id> (<result>) · co-occurrence <✓|—>` from the `kb session end` output line. Hard cap ~30 lines — compress a long line to counts (e.g. `5 tickets advanced (#1611 #1266 …)`) and put the detail in a ticket comment or KB entry, referenced by id.
+Line content conventions: Result `<✔ success | ◐ partial | ✘ failure | ? unknown> — <one-line outcome vs the session goal>`; QA `build <✓|✗|—> · lint <✓|✗ (N errors)|—> · tests <passed>/<total>`; Tickets one entry per ticket touched (status transition where one happened, otherwise `commented`/`created`). Hard cap ~30 lines — compress a long line to counts (e.g. `5 tickets advanced (#1611 #1266 …)`) and put the detail in a ticket comment or KB entry, referenced by id.
 
 ## After the report — prompt to clear context
 
@@ -226,6 +270,7 @@ If a ticket was being worked on, update it:
 - [ ] Journal comment added describing what was accomplished
 - [ ] Any discovered edge cases or limitations documented in journal comments
 - [ ] **If status set to `testing`:** Run `/test-plan <id>` to generate and POST a test plan. Every ticket entering Testing must have a test plan.
+- [ ] Every note about an open ticket — a follow-up, a pending check, a caveat — is a journal comment on that ticket (`kb ticket comment <id> "…" --actor claude`), not a handover reminder.
 <!-- kb:end-session/ticket-update:end -->
 
 <!-- kb:end-session/capture-insights:begin -->

@@ -2,7 +2,7 @@
 name: start-session
 description: Limedice session initialization — load context and resume
 kb-modules:
-  start-session/session-anchor: "2026-10-08T20:11:25.758Z"
+  start-session/session-anchor: "2026-10-24T20:12:39.256Z"
   start-session/ensure-kb: "2026-07-16T08:38:17.857Z"
   start-session/staleness-check: "2026-10-07T06:40:34.624Z"
   start-session/handback-scan: "2026-10-07T06:39:15.967Z"
@@ -48,8 +48,10 @@ Store the printed `session_id`. For the remainder of this session, include the h
 - **`lease unavailable — KB unreachable`** — the session proceeds without a lease; say so.
 - A stderr `WARNING: previous anchor ... was never closed` — surface it to the user. It usually means the previous session skipped `/end-session` (harmless) but can mean a second session is running in this project.
 - `"start_sha": null` (not a git repository) — say so: the end-session checks that depend on it degrade to their fallbacks.
+- **Pending replay lines** — before it reads the handover, `kb session start` replays this machine's pending session files for the project: `replayed pending session <id> → #<n> (<result>)`, `recorded interrupted session <id> → #<n> (unknown) — no draft`, or a `not replayed` / `not recorded` line that names the kept file. Mention each in one line; a kept file waits for the next start (`kb status` lists it). A replay changes the handover, so if `kb resume-pack` already ran this session, run it again.
+- **Open reminders** — on stderr, `handover: <N> open reminder(s)` and one `- [#<id>] <text>` line per open handover reminder (never capped). The anchor stores their ids as `handover_seen`: these are the reminders this session marks at `/end-session`. `handover: reminders unavailable (…) — no auto-carry this session` → say so in one line.
 
-The anchor file (`~/.knowledgebench/session-current-<project>.json`) is read by `/end-session`: `start_sha` scopes the file-growth and system-model drift checks to exactly this session's commits, and `session_id` drives the co-occurrence update. `/end-session` stamps `ended_at` when it closes the session and releases the lease. Do not delete the file mid-session.
+The anchor file (`~/.knowledgebench/session-current-<project>.json`) is read by `/end-session`: `start_sha` scopes the system-model drift check to exactly this session's commits, `session_id` drives the co-occurrence update, and `handover_seen` is sent as the session's seen set. `/end-session` stamps `ended_at` when it closes the session and releases the lease. Do not delete the file mid-session.
 <!-- kb:start-session/session-anchor:end -->
 
 ## 3. Ready
