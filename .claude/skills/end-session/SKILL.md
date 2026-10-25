@@ -2,12 +2,12 @@
 name: end-session
 description: Limedice session cleanup — quality checks, ticket updates, knowledge capture
 kb-modules:
-  end-session/record-session: "2026-10-24T20:12:39.092Z"
-  end-session/session-report: "2026-10-24T20:12:39.173Z"
+  end-session/record-session: "2026-10-25T09:51:35.250Z"
+  end-session/session-report: "2026-10-25T09:51:35.259Z"
   end-session/code-quality: "2026-07-02T12:15:28.520Z"
   end-session/testing: "2026-05-30T18:17:14.715Z"
   end-session/git-hygiene: "2026-10-21T08:26:55.920Z"
-  end-session/ticket-update: "2026-10-24T20:12:39.008Z"
+  end-session/ticket-update: "2026-10-25T09:51:35.242Z"
   end-session/capture-insights: "2026-05-30T18:17:14.719Z"
   end-session/system-models-drift: "2026-10-10T12:19:16.437Z"
 ---
@@ -104,23 +104,53 @@ Only publish rows Scott approves.
 
 
 <!-- kb:end-session/record-session:begin -->
-This step has two parts: the wrap-up question with a draft record, then the handover item dispositions. The final record (`kb session end --file`) runs later, in the Session Report step, after the export, commit and push step. Do not run it here.
+This step has four parts: follow-up homes, the juice review, the wrap-up question, and the draft record. The final record (`kb session end --file`) runs later, in the Session Report step, after the export, commit and push step. Do not run it here.
+
+Every action in a project is a ticket (ADR #363). There is no handover list: nothing is carried to the next session except tickets, ticket journals and the session record.
+
+### Follow-up homes
+
+Tickets are created when the action is found, not batched here. Check that every follow-up of this session has exactly one home, and give one now to any that has none:
+- An action → a ticket with type, priority and milestone (`kb ticket new …`; search with `kb ticket search "<keywords>"` first). Its "Why it is valuable" section says what happens if it waits. A decision that Scott owes → a ticket with `--assignee user`. Work outside every project (`~/.claude`, fleet-wide pushes) → a ticket in the `claude-config` project.
+- A note about a ticket (a follow-up, a pending check, a caveat) → that ticket's journal: `kb ticket comment <id> "…" --actor claude`.
+- Waits for another ticket → a ticket blocked by it: `kb ticket block <new-id> --by <id> --actor claude`.
+- Declined → an entry on the project's won't-do register (`review/finding-triage`, `kb get skill-modules 86`).
+- State (commits not pushed, uncommitted files, kept worktrees, human checks pending, idle in-progress tickets, batch plans) → nothing. The start view computes it.
+- Session context (what was done, what was decided) → the payload `summary` and `decisions`.
+
+### Juice review
+
+List the tickets this session created, in every project: `kb ticket list --created-session <session_id> --all --format compact` (`session_id` from the session anchor). A ticket created through MCP records no session: add any such ticket by id. Skip the closed and cancelled rows. For each open ticket, read it (`kb ticket show <id>`) and note id, project, title, priority, milestone and why (one line from "Why it is valuable").
+
+Give each one verdict against its milestone goal and the worth-it test (`review/finding-triage`, module #86):
+- **Keep** — it delivers its milestone's goal, is a show-stopper, or passes all four worth-it answers.
+- **Backlog** — not needed for the goal, but it passes the worth-it test.
+- **Merge → #N** — another open ticket covers the same outcome.
+- **Won't-do** — it fails the worth-it test (any of the four answers), or its premise is false.
+
+With no open ticket, there is no juice review and no `Juice` question.
+
+### Next-session focus
+
+Propose what the next session starts with. "Do this next" is a ticket field, not a pin: the ticket gets priority `urgent` and moves into the in-flight milestone (the resume pack's `In flight:` line), so Next Up ranks it first (an older urgent ticket in that milestone still comes before it). When the head of `kb ticket next --limit 1` is already the right ticket, propose nothing and leave out the `Focus` question.
 
 ### Wrap-up question
 
 Ask Scott the wrap-up questions with the **`AskUserQuestion` multi-choice widget**. Never use a typed free-text prompt: typed replies to multi-part questions arrive incomplete (e.g. "success" answering only one of two) and cause clarifying round-trips. This is the single interactive stop for session wrap-up.
 
-First run `kb ticket sequence show`. Then send **one `AskUserQuestion` call** with stable headers, so that a retry asks the same slot again:
+Send **one `AskUserQuestion` call** with stable headers, so that a retry asks the same slot again:
 1. **Was this session successful?** — options `success` / `partial` / `failure` / `unknown` (header `Result`).
 2. **Push to GitHub afterwards?** — options `yes` / `no` (header `Push`).
-3. **Only when `kb ticket sequence show` printed a `Sequence override`** (not `No sequence override set`): **Keep the Next Up pin?** — options `keep` / `replace` / `clear` (header `Pin`). The question names the pinned order and its state. The `replace` option names the new order you propose. With no pin, there is no third sub-question.
+3. **Only when the juice review has a ticket:** **Apply the juice verdicts?** (header `Juice`). Put the table `# | Project | Title | Priority | Milestone | Verdict | Why` in the preview of the first option. Every ticket appears there: past 30 rows, keep a row for each Merge and Won't-do ticket and list the Keep and Backlog tickets as ids per verdict. When any verdict is Merge or Won't-do, put this line above the table: `⚠ Cancel is permanent: KB cannot reopen a cancelled ticket.` Options: `Apply all` (recommended) / `Apply with changes` — Scott writes the overrides in the notes or as the "Other" reply, as `#<id> → <verdict>`, one per line.
+4. **Only when the focus step proposed a ticket:** **Next session starts with?** (header `Focus`). Options: `#<id> → urgent + <milestone>` (recommended; the preview names the ticket, its why and the current head of Next Up), at most one alternative ticket, and `No change`.
 
-If an answer is missing or outside the listed options (widget dismissed, or an "Other" free-text reply), ask **only that sub-question** again with `AskUserQuestion`. Never fall back to a typed prompt. If `AskUserQuestion` is not available in the running agent, show the same options as a numbered inline prompt and wait for the selection.
+If an answer is missing or outside the listed options (widget dismissed, or an "Other" free-text reply), ask **only that sub-question** again. Exception: for `Juice`, notes or an "Other" reply whose lines all read `#<id> → <verdict>` (a listed ticket and one of the four verdicts) are the overrides; `Apply with changes` with no valid override line is asked again with `AskUserQuestion`. Never fall back to a typed prompt. If `AskUserQuestion` is not available in the running agent, show the same options as a numbered inline prompt and wait for the selection.
 
 Act on the answers:
 - `Result` sets both the payload `result` and the Session Report `Result` line. They must agree.
 - `Push` goes forward to the export/push step (or to the Session Report step when this skill has no push step). Do not ask again there.
-- `Pin`: `keep` → nothing. `clear` → `kb ticket sequence clear`. `replace` → read `kb ticket sequence show`, then `kb ticket sequence set <id>,<id>,… --note "<why>"` (one comma list) with the order named in the option. KB never clears a pin automatically.
+- `Juice` — apply each confirmed verdict (the proposal with Scott's overrides), then journal it on the ticket: `kb ticket comment <id> "juice review <YYYY-MM-DD>: <verdict> — <why>" --actor claude`. Keep → the journal line only. Backlog → move it to its project's Backlog milestone and add the tag `nice-to-have` (`--tags` replaces the whole set: read the current tags and pass them all): `kb ticket update <id> --milestone <backlog-id> --tags <complete-set> --actor claude`; with no Backlog milestone, create one with `kb milestone new --project <project> --name "Backlog" --version 9999.0 --description "Unscheduled tickets"`. Merge → comment on the kept ticket what the merged one adds, then `kb ticket update <id> --status cancelled --actor claude`. Won't-do → `kb ticket update <id> --status cancelled --actor claude` and a won't-do register entry.
+- `Focus` — after the juice verdicts, and only when the chosen ticket's final verdict is Keep (or it was not in the review): `kb ticket update <id> --priority urgent --milestone "<in-flight milestone>" --actor claude` (the name on the resume pack's `In flight:` line, or its id). Then run `kb ticket next --limit 1`; when another ticket still heads it, name that ticket and why in the Session Report `next` line. A ticket that the juice review moved out or cancelled gets no Focus write: report it instead. `No change` → nothing.
 
 ### Draft
 
@@ -136,38 +166,19 @@ The command prints `draft saved <path>` and records nothing. If the session stop
 
 Payload (one JSON object):
 - `summary` — 1–2 sentences. `decisions` — the key decisions. `result` — the `Result` answer.
-- `items` — the handover changes (next part). Never type `seen`: the CLI adds the ids that `kb session start` printed.
 - `report` — the Session Report facts (Session Report step).
 
-### Item dispositions
-
-The handover holds stored reminders, each with a state. List the open ones with `kb session items` (`- [#id] <text> — carried N×`). The reminders that `kb session start` printed at the start of this session are this session's to mark (the anchor's `handover_seen`). The server refuses a mark on any other item (`not_seen`).
-
-For new handover content, decide each candidate in this order:
-1. It names an open ticket (a follow-up, a pending check, a caveat) → write it to that ticket's journal: `kb ticket comment <id> "…" --actor claude`. Do not open an item.
-2. It is live state that KB or git already shows (commits not pushed, uncommitted files, kept worktrees, human checks pending, idle in-progress tickets, a stale pin, batch plans) → nothing. The resume pack computes these lines.
-3. It is work with a clear owner and outcome → a ticket (`kb ticket new …`). A decision that Scott owes → a ticket with `--assignee user`.
-4. Anything else → a reminder: one line in `items.open`. When an open item already says the same thing, mark that item and do not open a new one.
-
-Mark each seen item from evidence in KB, git and this session:
-- `done` — evidence shows that it happened. Add `{"id": 12, "note": "<the evidence: commit, ticket, answer>"}` to `items.done`.
-- `ticketed` — it moved to a ticket. Add `{"id": 15, "ticket": 4107}` to `items.ticketed`.
-- `dropped` — only when evidence shows that it is obsolete. Add `{"id": 14, "why": "<names a commit, ticket, file or answer>"}` to `items.dropped`. The server refuses an empty `why`.
-- `carry` — every other case, including ambiguous evidence. Add the id to `items.carry`. When in doubt, carry. Never drop on a guess.
-
-An item already carried twice (`carried 2×`) cannot be carried again. Mark it `done`, `dropped` or `ticketed`; a decision that Scott owes becomes a ticket with `--assignee user`. A seen item that you do not mark is carried automatically but shows as `unreviewed` (red), or as `overdue` (red) when it is at the limit. Put each id in one list only. Then save the draft again with the items.
-
-To close or reopen one item at any time: `kb session item <id> --state done|dropped|ticketed [--note <t>] [--ticket <n>]`, or `kb session item <id> --reopen`.
+There is no `items` key and no follow-ups text: every follow-up already has its home.
 
 ### Final record
 
-The Session Report step runs `kb session end --file -` with the same heredoc payload, completed with the push outcome. The command posts the session and its item changes in one transaction, runs the co-occurrence update, releases the lease, stamps `ended_at` on the anchor, and prints the record line `session recorded #<id> (<result>) · co-occurrence <✓|—> · anchor closed <✓|—>` and then the Session Report.
+The Session Report step runs `kb session end --file -` with the same heredoc payload, completed with the push outcome. The command posts the session, runs the co-occurrence update, releases the lease, stamps `ended_at` on the anchor, and prints the record line `session recorded #<id> (<result>) · co-occurrence <✓|—> · anchor closed <✓|—>` and then the Session Report.
 
 Act on its output:
 - `session end refused: …` — nothing was recorded and the anchor is still open. Run the command again from the checkout where `kb session start` ran. When the folder name is not the project name, add `--project <name>`. Do not report the session as recorded.
 - `session record failed: …` and `pending — replays at next kb session start on this machine` — the anchor closed and the payload is kept. Report this on the Session line. A `stored … · request …` hash line means that this session is already recorded with a different payload (`payload_mismatch`): report both hashes.
-- `server predates handover items — sent legacy follow_ups` — the KB server is older than handover items, so the new reminders went as text. Report it.
-- A usage error for `--file` (a `kb` CLI older than the payload form) — record with the flag form instead: `kb session end --summary "…" --decisions "…" --follow-ups "<the items.open texts, separated by ;>" --result <result>`, then render the report with `echo '<report json>' | kb session report -`.
+- A usage error for `--file` (a `kb` CLI older than the payload form) — record with the flag form instead: `kb session end --summary "…" --decisions "…" --result <result>`, then render the report with `echo '<report json>' | kb session report -`.
+
 <!-- kb:end-session/record-session:end -->
 
 ## 9. Export DB and Push
@@ -187,15 +198,15 @@ kb session end --file - <<'JSON'
 JSON
 ```
 
-Paste the command's output verbatim into a ` ```diff `-fenced code block (the language tag is what colours it in the terminal). Act on its record line as the wrap-up step says (a refusal, a pending file, the legacy warning).
+Paste the command's output verbatim into a ` ```diff `-fenced code block (the language tag is what colours it in the terminal). Act on its record line as the wrap-up step says (a refusal, a pending file).
 
 **Terse-steps rule (applies to the whole skill):** while working the steps before this one, print one line per step — outcome only, plus anything that failed. The wrap-up question is exempt: ask only the question, wait, then print the step's one outcome line. All other detail defers to this report — it is the only thing Scott should need to read.
 
 **Facts only:** fill the payload's `report` object only from what the earlier steps actually observed. Omit a line's key when its step did not run or found nothing — the CLI renders it as a red `—` line; never infer success. The wrap-up `Result` answer sets both `report.result` and the payload `result` — they must agree.
 
-`report` keys (all optional): `result`, `qa`, `git`, `tickets`, `insights`, `models`, `docs` — each `{"status": "good|bad|warn|neutral", "text": "<line content>"}`, where good renders green `+`, bad red `-`, warn orange `!`, neutral plain. A line mixing states takes the worst element's status (`good` only when everything on the line is healthy). Plus `efficiency` (array — top 1–2 findings from the session-reflection step) and `next` (string). The CLI fills the `Session` line from the record, and builds the **Handover** section from the server's applied result (opened, closed with each state, carried, `unreviewed`, `overdue`, refusals, conflicts), never from the requested dispositions. There is no `followUps` key: anything carried forward is a handover item, a ticket or a ticket journal note (wrap-up step).
+`report` keys (all optional): `result`, `qa`, `git`, `tickets`, `insights`, `models`, `docs` — each `{"status": "good|bad|warn|neutral", "text": "<line content>"}`, where good renders green `+`, bad red `-`, warn orange `!`, neutral plain. A line mixing states takes the worst element's status (`good` only when everything on the line is healthy). Plus `efficiency` (array — top 1–2 findings from the session-reflection step) and `next` (string). The CLI fills the `Session` line from the record. There is no `followUps` key: every follow-up has its home in a ticket, a ticket journal or the session record (wrap-up step).
 
-`git` and `next` are derived when omitted (commits since the anchor's `start_sha`, tree state and push state; the head of `kb ticket next`, which floats any `kb ticket sequence` pin to the top). Supply `git` yourself to include the push outcome, and `next` when a deliberate next-session order was agreed — persist that order first with the `Pin` answer (`kb ticket sequence set <ids> --note "<why>"`) so the pin survives the context reset.
+`git` and `next` are derived when omitted (commits since the anchor's `start_sha`, tree state and push state; the head of `kb ticket next`). Supply `git` yourself to include the push outcome, and `next` when a deliberate next-session focus was agreed — apply the `Focus` answer first (urgent + in-flight milestone), so that Next Up ranks it first after the context reset; the wrap-up step names any ticket that still heads it.
 
 Line content conventions: Result `<✔ success | ◐ partial | ✘ failure | ? unknown> — <one-line outcome vs the session goal>`; QA `build <✓|✗|—> · lint <✓|✗ (N errors)|—> · tests <passed>/<total>`; Tickets one entry per ticket touched (status transition where one happened, otherwise `commented`/`created`). Hard cap ~30 lines — compress a long line to counts (e.g. `5 tickets advanced (#1611 #1266 …)`) and put the detail in a ticket comment or KB entry, referenced by id.
 
@@ -270,7 +281,7 @@ If a ticket was being worked on, update it:
 - [ ] Journal comment added describing what was accomplished
 - [ ] Any discovered edge cases or limitations documented in journal comments
 - [ ] **If status set to `testing`:** Run `/test-plan <id>` to generate and POST a test plan. Every ticket entering Testing must have a test plan.
-- [ ] Every note about an open ticket — a follow-up, a pending check, a caveat — is a journal comment on that ticket (`kb ticket comment <id> "…" --actor claude`), not a handover reminder.
+- [ ] Every note about an open ticket — a follow-up, a pending check, a caveat — is a journal comment on that ticket (`kb ticket comment <id> "…" --actor claude`). There is no separate reminder list (ADR #363).
 <!-- kb:end-session/ticket-update:end -->
 
 <!-- kb:end-session/capture-insights:begin -->
