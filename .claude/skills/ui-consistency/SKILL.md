@@ -1,12 +1,12 @@
 ---
 name: ui-consistency
-description: Pre-commit audit for UI consistency — design tokens, component primitives, dark-theme integrity, accessibility patterns pulled from KB insights. Runs on UI-touching diffs. Use `--plan` mode during planning to inject project UI conventions into context. Triggers when changes touch *.tsx, *.jsx, *.html, *.css, *.scss, or design-token files.
+description: Pre-commit audit for UI consistency — design tokens, component primitives, dark-theme integrity, accessibility patterns pulled from KB insights. Runs on UI-touching diffs. Use `--plan` mode during planning to inject project UI conventions into context. Triggers when changes touch *.tsx, *.jsx, *.html, *.css, *.scss, design-token files, or .ts/.js files that build DOM (innerHTML, createElement, HTML markup).
 kb-modules:
-  ui-consistency/scope-detection: "2026-05-18T06:26:06.439Z"
-  ui-consistency/audit-checks: "2026-06-26T10:31:47.491Z"
-  ui-consistency/a11y-from-kb: "2026-10-08T18:51:22.450Z"
+  ui-consistency/scope-detection: "2026-10-11T14:34:54.355Z"
+  ui-consistency/audit-checks: "2026-10-11T14:49:59.355Z"
+  ui-consistency/a11y-from-kb: "2026-10-26T20:12:54.666Z"
   ui-consistency/dom-pedant-handoff: "2026-05-18T06:26:06.462Z"
-  ui-consistency/plan-mode: "2026-05-18T06:26:06.469Z"
+  ui-consistency/plan-mode: "2026-10-11T14:49:59.435Z"
   ui-consistency/report-and-fix: "2026-05-18T06:26:06.476Z"
 ---
 
@@ -33,12 +33,15 @@ Decide whether this run has anything to audit and what to look at.
 - `*.tsx`, `*.jsx`, `*.svelte`, `*.vue`, `*.astro`
 - `*.html`, `*.htm`
 - `*.css`, `*.scss`, `*.sass`, `*.less`
+- `*.ts`, `*.js`, `*.mjs`, `*.cjs` files that build DOM or hold HTML markup (never `*.test.*` / `*.spec.*`). `kb ui-audit` owns the content test; when unsure, pass the file and let it decide.
 - Tailwind config or design-token files (`tokens.css`, `design-tokens.*`, `theme.ts`)
 
 **Source of file list:**
 - Pre-commit mode (default): `git diff --cached --name-only --diff-filter=ACMR` (staged); fall back to `git diff --name-only` if nothing staged.
-- `--all` flag: every UI file under `src/`, `app/`, or `web/`.
+- `--all` flag: every UI file under `src/`, `app/`, or `web/`, skipping generated and vendored directories (`vendor/`, `dist/`, `build/`, `coverage/`, …).
 - `--files <glob>`: explicit list.
+
+In pre-commit mode `kb ui-audit` reports only findings on lines the diff adds, so a touched file's older findings do not land on the change. `--all` and explicit paths audit whole files.
 
 **Early exit (silent):**
 - No matching files → print one line: `ui-consistency: no UI files in scope, skipping.` and stop.
@@ -91,15 +94,18 @@ Treat its output as the mechanical findings — `error` blocks, `warn`/`info` re
    Project-specific exceptions live in the `:append` block.
 2. **Missing text contrast** — `background-color` set without a matching `color` on the same element (dark-mode contrast risk). Needs per-element reasoning.
 3. **Mixed token sources** — some `var(--color-...)`, some raw hex on one component → normalise.
+4. **View states and repeat behaviour** — review only views the diff adds and the loading or action paths it adds or behaviourally changes. Read the surrounding code for shared handling (error boundary, toast, request layer, server dedupe) before you flag. Do not raise pre-existing omissions.
+   - A foreground async load shows a loading state, a zero-result state where a list or query can be empty ("not found" for a single-item view), and user-visible feedback on failure (inline, toast or a shared boundary). A component that receives loaded props needs none of these. A background refresh that keeps usable data, or retries on purpose, needs no message.
+   - For each mutating action the diff adds or changes, name its intended repeat behaviour: single-flight, queued, or repeatable (e.g. an increment). A single-flight guard covers every entry point (click, Enter, key repeat), is checked before a second operation starts (KB insight #562), and releases on success and on failure so a retry works. Review a non-mutating action the same way when a repeat would open a duplicate dialog, panel or listener.
+   - `error` only for a high-confidence defect the diff introduces or makes worse: a repeat that duplicates a harmful effect or a UI element, or a user-started operation that fails with no visible feedback. `warn` for a guard or state you cannot locate, and for a missing loading or zero-result state.
 
 ### Severity
 
-- `error` — a token violation in a non-token source, a raw primitive that has a library replacement, a known-bad a11y pattern (from `a11y-from-kb`)
-- `warn` — class chaos, suspicious PCS query
+- `error` — a token violation in a non-token source, a raw primitive that has a library replacement, a known-bad a11y pattern (from `a11y-from-kb`), a check-4 repeat or silent-failure defect
+- `warn` — class chaos, suspicious PCS query, a check-4 guard or state you cannot locate, a missing loading or zero-result state
 - `info` — opportunity to use a newer token
 
 `error` blocks; `warn`/`info` is reported but does not block.
-
 <!-- kb:ui-consistency/audit-checks:end -->
 
 <!-- kb:ui-consistency/audit-checks:append -->
@@ -124,7 +130,7 @@ Pull project-relevant a11y rules from KB Insights and apply them as audit checks
    ```
    `kb query` returns 20 rows by default, so keep `--limit` above the result count. If a result reports more entries than it shows, raise the limit and run it again. The project-scoped query stays: the first query can miss project entries.
 
-2. Filter to insights whose `name` reads as an imperative prevention rule (the `/kb-postmortem` shape). Each becomes a check.
+2. Filter to insights whose `name` reads as an imperative prevention rule (the shape `/dev-ticket` step 9a writes for bug tickets). Each becomes a check.
 
 3. For each rule, derive a detector if one is obvious:
    - "Trap Tab in destructive confirm" → detect `<dialog>` or `role="dialog"` open paths without a Tab cycle handler nearby
@@ -132,7 +138,7 @@ Pull project-relevant a11y rules from KB Insights and apply them as audit checks
 
 4. If a rule has no mechanical detector, list it under "manual review" — the human (or `dom-pedant` agent) needs to eyeball it. Do not silently drop it.
 
-5. As insights accumulate via `/kb-postmortem`, this module gets more checks for free — no code change required. This is the compounding return.
+5. As insights accumulate from bug-ticket postmortems (`/dev-ticket` step 9a), this module gets more checks for free — no code change required. This is the compounding return.
 <!-- kb:ui-consistency/a11y-from-kb:end -->
 
 ## 4. dom-pedant Handoff
@@ -177,6 +183,10 @@ Tokens:
 - Radius: `var(--radius-...)`
 
 Theming: <strategy — class on root vs. prefers-color-scheme>
+
+View states — for each view the plan adds, and each loading or action path it adds or behaviourally changes (skip styling-only changes):
+- the states that apply (loading, zero-result or not-found, failure feedback), or "shared: <where>" / "n/a: <why>"
+- each mutating action's intended repeat behaviour (single-flight with its guard, queued, or repeatable) and how it recovers after a failure
 
 Known a11y rules (pulled from KB insights tagged `a11y` for this project):
 - <rule 1>
