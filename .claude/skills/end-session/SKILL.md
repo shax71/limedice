@@ -2,8 +2,8 @@
 name: end-session
 description: Limedice session cleanup — quality checks, ticket updates, knowledge capture
 kb-modules:
-  end-session/record-session: "2026-10-25T09:51:35.250Z"
-  end-session/session-report: "2026-10-25T09:51:35.259Z"
+  end-session/record-session: "2026-11-01T11:33:36.391Z"
+  end-session/session-report: "2026-11-01T11:33:36.472Z"
   end-session/code-quality: "2026-07-02T12:15:28.520Z"
   end-session/testing: "2026-05-30T18:17:14.715Z"
   end-session/git-hygiene: "2026-10-21T08:26:55.920Z"
@@ -136,18 +136,24 @@ Propose what the next session starts with. "Do this next" is a ticket field, not
 
 ### Wrap-up question
 
-Ask Scott the wrap-up questions with the **`AskUserQuestion` multi-choice widget**. Never use a typed free-text prompt: typed replies to multi-part questions arrive incomplete (e.g. "success" answering only one of two) and cause clarifying round-trips. This is the single interactive stop for session wrap-up.
+Ask Scott the wrap-up questions with the **`AskUserQuestion` multi-choice widget**. Never use a typed free-text prompt: typed replies to multi-part questions arrive incomplete (e.g. "yes" answering only one of two) and cause clarifying round-trips. This is the single interactive stop for session wrap-up.
 
 Send **one `AskUserQuestion` call** with stable headers, so that a retry asks the same slot again:
-1. **Was this session successful?** — options `success` / `partial` / `failure` / `unknown` (header `Result`).
-2. **Push to GitHub afterwards?** — options `yes` / `no` (header `Push`).
-3. **Only when the juice review has a ticket:** **Apply the juice verdicts?** (header `Juice`). Put the table `# | Project | Title | Priority | Milestone | Verdict | Why` in the preview of the first option. Every ticket appears there: past 30 rows, keep a row for each Merge and Won't-do ticket and list the Keep and Backlog tickets as ids per verdict. When any verdict is Merge or Won't-do, put this line above the table: `⚠ Cancel is permanent: KB cannot reopen a cancelled ticket.` Options: `Apply all` (recommended) / `Apply with changes` — Scott writes the overrides in the notes or as the "Other" reply, as `#<id> → <verdict>`, one per line.
-4. **Only when the focus step proposed a ticket:** **Next session starts with?** (header `Focus`). Options: `#<id> → urgent + <milestone>` (recommended; the preview names the ticket, its why and the current head of Next Up), at most one alternative ticket, and `No change`.
+1. **Push to GitHub afterwards?** — options `yes` / `no` (header `Push`).
+2. **Only when the juice review has a ticket:** **Apply the juice verdicts?** (header `Juice`). Put a narrow table in the preview of the first option, with three columns: `#`, `Verdict` and `Title`. Align the columns with spaces, not pipes. Cut each title with `…` so that no row is longer than 60 characters, the widest verdict (`Merge → #N`) included; a longer row wraps in the preview box. Project, priority, milestone and why stay out of the preview; the journal line records the why. Every ticket appears there: past 30 rows, keep a row for each Merge and Won't-do ticket and list the Keep and Backlog tickets as ids per verdict. When any verdict is Merge or Won't-do, put this line above the table: `⚠ Cancel is permanent: KB cannot reopen a cancelled ticket.` Options: `Apply all` (recommended) / `Apply with changes` — Scott writes the overrides in the notes or as the "Other" reply, as `#<id> → <verdict>`, one per line.
+3. **Only when the focus step proposed a ticket:** **Next session starts with?** (header `Focus`). Options: `#<id> → urgent + <milestone>` (recommended; the preview names the ticket, its why and the current head of Next Up), at most one alternative ticket, and `No change`.
 
 If an answer is missing or outside the listed options (widget dismissed, or an "Other" free-text reply), ask **only that sub-question** again. Exception: for `Juice`, notes or an "Other" reply whose lines all read `#<id> → <verdict>` (a listed ticket and one of the four verdicts) are the overrides; `Apply with changes` with no valid override line is asked again with `AskUserQuestion`. Never fall back to a typed prompt. If `AskUserQuestion` is not available in the running agent, show the same options as a numbered inline prompt and wait for the selection.
 
+Do not ask whether the session was successful: Scott answers `success` almost every time, so the question costs a click and adds no signal. Set the result yourself from what the earlier steps observed:
+- `success` — the default.
+- `partial` — the session goal was met only in part, or a check this session owns failed (build, lint, tests).
+- `failure` — the session goal was not met.
+- `unknown` — the session had no goal to judge against.
+
+The result sets both the payload `result` and the Session Report `Result` line. They must agree.
+
 Act on the answers:
-- `Result` sets both the payload `result` and the Session Report `Result` line. They must agree.
 - `Push` goes forward to the export/push step (or to the Session Report step when this skill has no push step). Do not ask again there.
 - `Juice` — apply each confirmed verdict (the proposal with Scott's overrides), then journal it on the ticket: `kb ticket comment <id> "juice review <YYYY-MM-DD>: <verdict> — <why>" --actor claude`. Keep → the journal line only. Backlog → move it to its project's Backlog milestone and add the tag `nice-to-have` (`--tags` replaces the whole set: read the current tags and pass them all): `kb ticket update <id> --milestone <backlog-id> --tags <complete-set> --actor claude`; with no Backlog milestone, create one with `kb milestone new --project <project> --name "Backlog" --version 9999.0 --description "Unscheduled tickets"`. Merge → comment on the kept ticket what the merged one adds, then `kb ticket update <id> --status cancelled --actor claude`. Won't-do → `kb ticket update <id> --status cancelled --actor claude` and a won't-do register entry.
 - `Focus` — after the juice verdicts, and only when the chosen ticket's final verdict is Keep (or it was not in the review): `kb ticket update <id> --priority urgent --milestone "<in-flight milestone>" --actor claude` (the name on the resume pack's `In flight:` line, or its id). Then run `kb ticket next --limit 1`; when another ticket still heads it, name that ticket and why in the Session Report `next` line. A ticket that the juice review moved out or cancelled gets no Focus write: report it instead. `No change` → nothing.
@@ -165,7 +171,7 @@ JSON
 The command prints `draft saved <path>` and records nothing. If the session stops before the final record, the next `kb session start` on this machine replays the draft as an `unknown` session. Each time the payload changes, run the command again with the whole payload: each run replaces the draft.
 
 Payload (one JSON object):
-- `summary` — 1–2 sentences. `decisions` — the key decisions. `result` — the `Result` answer.
+- `summary` — 1–2 sentences. `decisions` — the key decisions. `result` — the result set in the wrap-up step.
 - `report` — the Session Report facts (Session Report step).
 
 There is no `items` key and no follow-ups text: every follow-up already has its home.
@@ -178,7 +184,6 @@ Act on its output:
 - `session end refused: …` — nothing was recorded and the anchor is still open. Run the command again from the checkout where `kb session start` ran. When the folder name is not the project name, add `--project <name>`. Do not report the session as recorded.
 - `session record failed: …` and `pending — replays at next kb session start on this machine` — the anchor closed and the payload is kept. Report this on the Session line. A `stored … · request …` hash line means that this session is already recorded with a different payload (`payload_mismatch`): report both hashes.
 - A usage error for `--file` (a `kb` CLI older than the payload form) — record with the flag form instead: `kb session end --summary "…" --decisions "…" --result <result>`, then render the report with `echo '<report json>' | kb session report -`.
-
 <!-- kb:end-session/record-session:end -->
 
 ## 9. Export DB and Push
@@ -202,7 +207,7 @@ Paste the command's output verbatim into a ` ```diff `-fenced code block (the la
 
 **Terse-steps rule (applies to the whole skill):** while working the steps before this one, print one line per step — outcome only, plus anything that failed. The wrap-up question is exempt: ask only the question, wait, then print the step's one outcome line. All other detail defers to this report — it is the only thing Scott should need to read.
 
-**Facts only:** fill the payload's `report` object only from what the earlier steps actually observed. Omit a line's key when its step did not run or found nothing — the CLI renders it as a red `—` line; never infer success. The wrap-up `Result` answer sets both `report.result` and the payload `result` — they must agree.
+**Facts only:** fill the payload's `report` object only from what the earlier steps actually observed. Omit a line's key when its step did not run or found nothing — the CLI renders it as a red `—` line; never infer success. The one judged line is `Result`: the result that the wrap-up step sets fills both `report.result` and the payload `result` — they must agree.
 
 `report` keys (all optional): `result`, `qa`, `git`, `tickets`, `insights`, `models`, `docs` — each `{"status": "good|bad|warn|neutral", "text": "<line content>"}`, where good renders green `+`, bad red `-`, warn orange `!`, neutral plain. A line mixing states takes the worst element's status (`good` only when everything on the line is healthy). Plus `efficiency` (array — top 1–2 findings from the session-reflection step) and `next` (string). The CLI fills the `Session` line from the record. There is no `followUps` key: every follow-up has its home in a ticket, a ticket journal or the session record (wrap-up step).
 
