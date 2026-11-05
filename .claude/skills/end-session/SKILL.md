@@ -2,7 +2,7 @@
 name: end-session
 description: Limedice session cleanup — quality checks, ticket updates, knowledge capture
 kb-modules:
-  end-session/record-session: "2026-11-01T11:33:36.391Z"
+  end-session/record-session: "2026-11-01T16:06:07.760Z"
   end-session/session-report: "2026-11-01T11:33:36.472Z"
   end-session/code-quality: "2026-07-02T12:15:28.520Z"
   end-session/testing: "2026-05-30T18:17:14.715Z"
@@ -171,7 +171,7 @@ JSON
 The command prints `draft saved <path>` and records nothing. If the session stops before the final record, the next `kb session start` on this machine replays the draft as an `unknown` session. Each time the payload changes, run the command again with the whole payload: each run replaces the draft.
 
 Payload (one JSON object):
-- `summary` — 1–2 sentences. `decisions` — the key decisions. `result` — the result set in the wrap-up step.
+- `summary` — 1–2 sentences. `decisions` — the key decisions, as one string: join several as `- ` lines separated by `\n`. A JSON array is refused before anything is recorded or closed (`payload decisions must be a string`): resend it as one string. `result` — the result set in the wrap-up step.
 - `report` — the Session Report facts (Session Report step).
 
 There is no `items` key and no follow-ups text: every follow-up already has its home.
@@ -181,7 +181,9 @@ There is no `items` key and no follow-ups text: every follow-up already has its 
 The Session Report step runs `kb session end --file -` with the same heredoc payload, completed with the push outcome. The command posts the session, runs the co-occurrence update, releases the lease, stamps `ended_at` on the anchor, and prints the record line `session recorded #<id> (<result>) · co-occurrence <✓|—> · anchor closed <✓|—>` and then the Session Report.
 
 Act on its output:
-- `session end refused: …` — nothing was recorded and the anchor is still open. Run the command again from the checkout where `kb session start` ran. When the folder name is not the project name, add `--project <name>`. Do not report the session as recorded.
+- `session end refused: session <id> already ended at <time> — its record is pending …` — an earlier end in this conversation failed to post and kept its payload. Run `kb session start`: it replays that record. Run `kb session end --file -` after it only when work happened since the earlier end, with a payload that describes only that work.
+- `session end refused: session <id> already ended at <time> — run kb session start …` — an earlier end already recorded this conversation's session, and nothing was recorded now. Do not run the end again: run `kb session start`, then `kb session end --file -` with a payload for the work since the earlier end, so it gets its own session id.
+- Any other `session end refused: …` — nothing was recorded and the anchor is still open. Run the command again from the checkout where `kb session start` ran. When the folder name is not the project name, add `--project <name>`. Do not report the session as recorded.
 - `session record failed: …` and `pending — replays at next kb session start on this machine` — the anchor closed and the payload is kept. Report this on the Session line. A `stored … · request …` hash line means that this session is already recorded with a different payload (`payload_mismatch`): report both hashes.
 - A usage error for `--file` (a `kb` CLI older than the payload form) — record with the flag form instead: `kb session end --summary "…" --decisions "…" --result <result>`, then render the report with `echo '<report json>' | kb session report -`.
 <!-- kb:end-session/record-session:end -->
