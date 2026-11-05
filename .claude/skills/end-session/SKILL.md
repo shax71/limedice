@@ -6,7 +6,7 @@ kb-modules:
   end-session/session-report: "2026-11-01T11:33:36.472Z"
   end-session/code-quality: "2026-07-02T12:15:28.520Z"
   end-session/testing: "2026-05-30T18:17:14.715Z"
-  end-session/git-hygiene: "2026-11-05T13:24:56.848Z"
+  end-session/git-hygiene: "2026-11-05T13:31:48.405Z"
   end-session/ticket-update: "2026-10-25T09:51:35.242Z"
   end-session/capture-insights: "2026-05-30T18:17:14.719Z"
   end-session/system-models-drift: "2026-10-10T12:19:16.437Z"
@@ -246,7 +246,7 @@ The Session Report is the final output of `/end-session`. Once it has printed an
 - [ ] No accidental commits of temp files, `node_modules/`, or `dist/`
 - [ ] No stale worktrees. Run the sweep below from any checkout of the repo; it aborts unless the main checkout is on `main` or `master`. It removes a linked worktree and its branch only when all of these are true:
   - Merging it into the main checkout's branch changes no file (`git merge-tree`).
-  - `git status` and `git ls-files -v` succeed, show no assume-unchanged or skip-worktree file, and show no untracked, ignored or modified file except build output (`node_modules`, `dist`, `target`, `gen`, `test-results`) or `.DS_Store`.
+  - `git status` and `git ls-files -v` succeed, show no assume-unchanged or skip-worktree file, and show no untracked, ignored or modified file except `node_modules`, `dist`, `target` or `.DS_Store`, and ignored `gen` or `test-results` folders (an untracked one is kept: it can hold hand-written work).
   - It is not the worktree you run from, and it is unlocked or its lock names a dead pid.
 
   Report each `KEPT` line with its reason. Do not force-remove a kept worktree. `check by hand` means every commit has a `git patch-id --verbatim` match on the branch, but the branch changed that content later (a review fix or a revert). Compare `git diff <branch>...<worktree HEAD>` with the current files before you remove it.
@@ -273,7 +273,7 @@ while IFS=$'\037' read -r w h b l; do
     elif [ "$rc" = 2 ]; then why="patches on $base but content changed since; check by hand"
     elif ! s=$(git -C "$w" status --porcelain --ignored --untracked-files=normal) || ! f=$(git -C "$w" ls-files -v); then why="git status failed"
     elif printf '%s\n' "$f" | grep -q '^[a-zS] '; then why="assume-unchanged or skip-worktree files"
-    elif [ -n "$(printf '%s\n' "$s" | grep -v -E '^(\?\?|!!) (.*/)?(node_modules|dist|target|gen|test-results|\.DS_Store)/?$' | grep .)" ]; then why="uncommitted or ignored files"; fi
+    elif [ -n "$(printf '%s\n' "$s" | grep -v -E '^((\?\?|!!) (.*/)?(node_modules|dist|target|\.DS_Store)/?|!! (.*/)?(gen|test-results)/)$' | grep .)" ]; then why="uncommitted or ignored files"; fi
   fi
   if [ -n "$why" ]; then echo "KEPT $w ($why)"; continue; fi
   if [ -n "$l" ]; then git worktree unlock "$w"; fi
