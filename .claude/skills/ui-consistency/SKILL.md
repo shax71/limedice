@@ -5,9 +5,9 @@ kb-modules:
   ui-consistency/scope-detection: "2026-10-11T14:34:54.355Z"
   ui-consistency/audit-checks: "2026-10-11T14:49:59.355Z"
   ui-consistency/a11y-from-kb: "2026-10-26T20:12:54.666Z"
-  ui-consistency/dom-pedant-handoff: "2026-05-18T06:26:06.462Z"
+  ui-consistency/dom-pedant-handoff: "2026-11-06T12:04:00.785Z"
   ui-consistency/plan-mode: "2026-10-11T14:49:59.435Z"
-  ui-consistency/report-and-fix: "2026-05-18T06:26:06.476Z"
+  ui-consistency/report-and-fix: "2026-11-06T11:58:50.276Z"
 ---
 
 # UI Consistency
@@ -148,7 +148,7 @@ For files where the automated checks find anything non-trivial (≥1 `error` or 
 
 Prompt skeleton:
 ```
-Review these UI files for HTML correctness, CSS architecture, Shoelace / Web Awesome usage, Shadow DOM correctness, and accessibility. Focus on the violations already detected by the automated audit (listed below) AND look for anything the automated checks could not see (semantic structure, ARIA correctness, cross-platform webview compatibility).
+Review these UI files for HTML correctness, CSS architecture, usage of the project's component library (<library named in the project block of audit-checks>), Shadow DOM correctness, and accessibility. Focus on the violations already detected by the automated audit (listed below) AND look for anything the automated checks could not see (semantic structure, ARIA correctness, cross-platform webview compatibility).
 
 Files: <list>
 Automated findings: <copy the audit output for those files>
@@ -251,7 +251,7 @@ Summary:
 **Auto-fix policy:**
 - Token violations with a clear 1:1 mapping (e.g. `#1a1a1a` → `var(--color-bg-elevated)`) can be auto-applied **only if** the token file confirms the mapping. Otherwise leave for manual fix.
 - Inline-style → class moves require human judgement (class might not exist yet). Do not auto-fix.
-- Primitive replacements (raw `<button>` → `<sl-button>`) almost always need attribute / event-handler translation. Do not auto-fix; suggest the replacement.
+- Primitive replacements (raw `<button>` → the UI library's button primitive) almost always need attribute / event-handler translation. Do not auto-fix; suggest the replacement.
 
 **Return codes** (for use in `/dev-ticket`):
 - exit 0 — clean or warnings only
