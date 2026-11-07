@@ -6,8 +6,9 @@ kb-modules:
   code-review/debug-leaks: "2026-07-02T12:15:28.181Z"
   code-review/architecture-layering: "2026-07-05T08:42:30.625Z"
   code-review/maintainability: "2026-05-30T18:17:14.703Z"
-  code-review/testing: "2026-07-02T12:15:28.263Z"
-  code-review/report: "2026-05-30T18:17:14.707Z"
+  code-review/testing: "2026-10-11T14:23:14.408Z"
+  code-review/report: "2026-10-11T15:15:04.004Z"
+  code-review/security: "2026-10-11T15:14:47.790Z"
 ---
 
 # Pre-Commit Code Review
@@ -81,6 +82,20 @@ limedice specifics:
 
 ### Maintainability
 
+<!-- kb:code-review/security:begin -->
+**Security lens** — check changed behaviour and its direct callers, validators and sinks. Report only weaknesses the diff adds, worsens or newly exposes. Skip checks that do not apply, and credit existing controls.
+
+- [ ] Trust boundaries: input another party controls (HTTP, IPC, extension messages, imported files, URLs, agent output) cannot reach a privileged operation without validation and authorisation. Do not demand duplicate validation of trusted internal data.
+- [ ] HTTP exposure: changed listeners, routes and WebSocket handshakes keep their access controls. For a private API a browser can reach, check the exact origin allowlist, rejection of disallowed origins before handlers run (simple requests skip preflight), and Host validation on local services. CORS headers alone are not access control.
+- [ ] Privileged UI: untrusted content cannot become executable markup or gain native privileges. Check changed DOM sinks, IPC and message sender checks, Tauri capabilities and extension permissions.
+- [ ] Files: a path built from untrusted data stays inside the operation's allowed scope. Use path-component containment, not string prefixes. Check traversal, symlinks and check-then-use races, and fail closed.
+- [ ] Execution and queries: untrusted data cannot become shell or SQL syntax. Use non-shell process APIs and bound SQL values, allowlist dynamic identifiers, and block option injection.
+- [ ] Data and resources: no real credentials or sensitive data newly exposed in logs, errors, fixtures or committed files. No unbounded untrusted payloads, and no privileged fetch to an attacker-chosen URL.
+- [ ] Dependencies (only when a manifest or lockfile changes): for each direct addition or upgrade, check package identity, unexpected lockfile changes, new install scripts, relevant advisories and the closed-source licence policy. An existing advisory counts only if the diff worsens or exposes it.
+
+**Findings** — state who controls the input, what it reaches, the impact, the existing controls, and path:line. `blocker`: a demonstrated security regression, including one reachable from malicious content in the user's own browser or webview. `concern`: a concrete lower-impact weakness. List unverified checks separately; do not report speculation.
+<!-- kb:code-review/security:end -->
+
 <!-- kb:code-review/maintainability:begin -->
 **Maintainability lens** — apply only to changed lines and directly touched seams, using existing project conventions where relevant:
 - [ ] Prefer behavior-preserving simplification that removes branches, modes, helpers, or layers over moving complexity around
@@ -110,6 +125,13 @@ Tie each finding to a concrete path or line.
 - [ ] Every new public function with non-trivial logic has direct unit or focused integration coverage
 - [ ] Test names state intent, following the stack's convention: `describe/it` phrasing (JS/TS), `test_[method]_[scenario]` in `#[cfg(test)]` modules (Rust), `test_*` pytest functions (Python)
 - [ ] No tests that only assert the function runs without throwing — tests must verify actual values
+- [ ] No verification weakened by this change. Compare against the pre-change baseline, including new untracked files; ignore unchanged context, moved code and documentation examples. Candidates:
+  - focus markers (`.only`, `fit`, `fdescribe`) — always fail
+  - skip/ignore markers (`.skip`, `#[ignore]`, `pytest.mark.skip`); new or broadened suppressions (`@ts-ignore`, `@ts-expect-error`, `eslint-disable`, `#[allow(...)]`, `# type: ignore`, `istanbul ignore`, disabled lint rules)
+  - deleted tests; assertions removed or loosened (exact values → broad matchers such as `expect.any`; error/rejection assertions removed); snapshots or golden files regenerated without review of the new output
+  - mocks that replace the unit under test; retries, longer timeouts or swallowed errors that hide failures
+  - gate bypasses: narrowed test discovery, coverage or lint scope; changed scripts or CI conditions; ignored exit codes; lowered thresholds
+  For each candidate, state the guarantee lost. It passes only with a justification tied to intended behaviour, equivalent replacement coverage, or an accepted tooling limitation. "Flaky" or "needed to pass" is not a justification.
 <!-- kb:code-review/testing:end -->
 
 ## 3. Report
@@ -124,6 +146,7 @@ Produce a structured pass/fail table:
 | Tests | pass/fail | N passed |
 | Debug leaks | pass/fail | |
 | Architecture | pass/fail | |
+| Security | pass/fail/n/a | Scope; unverified checks |
 | Test coverage | pass/fail | |
 
 For any failures, show the specific line(s) from the diff that caused the issue and suggest the fix.
