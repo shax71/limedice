@@ -113,4 +113,5 @@ No automated test suite — content and visual correctness is verified in the br
 
 - **Start**: AUTOMATICALLY run `/start-session` on the first user message of every new conversation — do not wait to be asked
 - **End**: run `/end-session` for session cleanup before finishing
+- **Lane workers** (first message `/dev-ticket <id> --lane`, env `KB_LANE_WORKER=1`): skip both rules above; never run `kb session start` or `kb session takeover`
 <!-- kb:claude-md/session-workflow:end -->
